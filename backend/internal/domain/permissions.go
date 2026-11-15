@@ -30,6 +30,7 @@ const (
 	PermClearanceOverride   = "clearance.override"
 	PermExitInterviewRead   = "exit_interview.read"
 	PermExitInterviewManage = "exit_interview.manage"
+	PermExitInterviewAmend  = "exit_interview.amend"
 	PermAnalyticsRead       = "analytics.read"
 	PermReportExport        = "report.export"
 	PermAuditRead           = "audit.read"
@@ -56,7 +57,8 @@ var Catalogue = []Permission{
 	{PermClearanceManage, "Exits", "Update any clearance item"},
 	{PermClearanceOverride, "Exits", "Complete a separation with open clearance items"},
 	{PermExitInterviewRead, "Exits", "Read exit interview responses"},
-	{PermExitInterviewManage, "Exits", "Schedule, record and amend exit interviews"},
+	{PermExitInterviewManage, "Exits", "Schedule and record exit interviews, edit the question template"},
+	{PermExitInterviewAmend, "Exits", "Amend an exit interview after it was submitted"},
 	{PermAnalyticsRead, "Insight", "View dashboard and analytics"},
 	{PermReportExport, "Insight", "Run and export reports"},
 	{PermAuditRead, "Oversight", "Read the audit log"},
@@ -85,7 +87,7 @@ func DefaultRoles() []Role {
 		PermUserRead, PermRoleRead, PermEmployeeRead, PermEmployeeManage, PermDepartmentRead, PermDepartmentManage,
 		PermSeparationRead, PermSeparationManage, PermSeparationApprove, PermSeparationRecordInv,
 		PermClearanceRead, PermClearanceManage, PermClearanceOverride, PermClearanceUpdateOwn,
-		PermExitInterviewRead, PermExitInterviewManage, PermAnalyticsRead, PermReportExport, PermAuditRead,
+		PermExitInterviewRead, PermExitInterviewManage, PermExitInterviewAmend, PermAnalyticsRead, PermReportExport, PermAuditRead,
 	}
 	hrOfficer := []string{
 		PermEmployeeRead, PermEmployeeManage, PermDepartmentRead, PermSeparationRead, PermSeparationManage,

@@ -120,7 +120,7 @@ func create(ctx context.Context, st *store.Store, org *domain.Organization, emai
 		{Category: "Administration", Title: "Return ID card, keys and access cards", AssigneeType: domain.ApproverRole, RoleID: role("HR Officer"), Active: true},
 		{Category: "Handover", Title: "Hand over work and documents", AssigneeType: domain.ApproverLineManager, Active: true},
 	}
-	if err := st.UpdateOrganization(ctx, org.ID, bson.M{"settings.clearanceTemplate": template}); err != nil {
+	if err := st.UpdateOrganization(ctx, org.ID, bson.M{"settings.clearanceTemplate": template, "settings.exitInterview": domain.DefaultExitInterviewTemplate()}); err != nil {
 		return err
 	}
 	return st.InsertUser(ctx, &domain.User{
