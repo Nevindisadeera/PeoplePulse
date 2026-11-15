@@ -92,11 +92,14 @@ func create(ctx context.Context, st *store.Store, org *domain.Organization, emai
 		return err
 	}
 	var adminRole bson.ObjectID
+	roleIDs := map[string]*bson.ObjectID{}
 	for _, r := range domain.DefaultRoles() {
 		r.ID, r.OrganizationID, r.CreatedAt, r.UpdatedAt = bson.NewObjectID(), org.ID, now, now
 		if err := st.InsertRole(ctx, &r); err != nil {
 			return err
 		}
+		id := r.ID
+		roleIDs[r.Name] = &id
 		if r.Locked {
 			adminRole = r.ID
 		}
@@ -107,6 +110,18 @@ func create(ctx context.Context, st *store.Store, org *domain.Organization, emai
 				return err
 			}
 		}
+	}
+	// Starter clearance checklist; organizations edit it under settings.
+	role := func(name string) *bson.ObjectID { return roleIDs[name] }
+	template := []domain.ClearanceTemplateItem{
+		{Category: "IT", Title: "Return laptop and other equipment", AssigneeType: domain.ApproverRole, RoleID: role("Clearance Officer"), Active: true},
+		{Category: "IT", Title: "Revoke system and email access", AssigneeType: domain.ApproverRole, RoleID: role("Clearance Officer"), Active: true},
+		{Category: "Finance", Title: "Settle advances, loans and expense claims", AssigneeType: domain.ApproverRole, RoleID: role("Clearance Officer"), Active: true},
+		{Category: "Administration", Title: "Return ID card, keys and access cards", AssigneeType: domain.ApproverRole, RoleID: role("HR Officer"), Active: true},
+		{Category: "Handover", Title: "Hand over work and documents", AssigneeType: domain.ApproverLineManager, Active: true},
+	}
+	if err := st.UpdateOrganization(ctx, org.ID, bson.M{"settings.clearanceTemplate": template}); err != nil {
+		return err
 	}
 	return st.InsertUser(ctx, &domain.User{
 		ID: bson.NewObjectID(), OrganizationID: org.ID, Email: email, PasswordHash: hash, FullName: name,

@@ -26,10 +26,11 @@ type EmploymentType struct {
 }
 
 type OrgSettings struct {
-	EmploymentTypes   []EmploymentType   `bson:"employmentTypes" json:"employmentTypes"`
-	NoticePeriodDays  *int               `bson:"noticePeriodDays,omitempty" json:"noticePeriodDays"`
-	SeparationReasons []SeparationReason `bson:"separationReasons,omitempty" json:"separationReasons"`
-	ApprovalChain     []ChainStep        `bson:"approvalChain,omitempty" json:"approvalChain"`
+	EmploymentTypes   []EmploymentType        `bson:"employmentTypes" json:"employmentTypes"`
+	NoticePeriodDays  *int                    `bson:"noticePeriodDays,omitempty" json:"noticePeriodDays"`
+	SeparationReasons []SeparationReason      `bson:"separationReasons,omitempty" json:"separationReasons"`
+	ApprovalChain     []ChainStep             `bson:"approvalChain,omitempty" json:"approvalChain"`
+	ClearanceTemplate []ClearanceTemplateItem `bson:"clearanceTemplate,omitempty" json:"clearanceTemplate"`
 }
 
 const DefaultNoticePeriodDays = 30

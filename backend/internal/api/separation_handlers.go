@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"slices"
 	"strings"
@@ -25,7 +26,8 @@ type employeeBrief struct {
 
 type separationView struct {
 	*domain.Separation
-	Employee *employeeBrief `json:"employee,omitempty"`
+	Employee  *employeeBrief    `json:"employee,omitempty"`
+	Clearance *clearanceSummary `json:"clearance,omitempty"`
 	// CanAct is true when the caller is the approver of the pending step.
 	CanAct bool `json:"canAct"`
 }
@@ -83,6 +85,9 @@ func (s *Server) writeSeparation(w http.ResponseWriter, r *http.Request, status 
 	view := separationView{Separation: sep, CanAct: canActOn(p, sep)}
 	if e, err := s.store.EmployeeByID(r.Context(), sep.OrganizationID, sep.EmployeeID); err == nil {
 		view.Employee = brief(*e)
+	}
+	if c, err := s.store.ClearanceBySeparation(r.Context(), sep.OrganizationID, sep.ID); err == nil {
+		view.Clearance = summarize(c)
 	}
 	httpx.JSON(w, status, view)
 }
@@ -293,12 +298,19 @@ func (s *Server) handleCreateSeparation(w http.ResponseWriter, r *http.Request) 
 	}
 	sep.Start(p.User.ID, now)
 
+	var onApproved func(ctx context.Context) error
+	if sep.Status == domain.SeparationApproved {
+		if onApproved, err = s.approvedSideEffects(r.Context(), org, emp, sep, now); err != nil {
+			httpx.Fail(w, r, err)
+			return
+		}
+	}
 	err = s.store.Atomic(r.Context(), func(ctx context.Context) error {
 		if err := s.store.InsertSeparation(ctx, sep); err != nil {
 			return err
 		}
-		if sep.Status == domain.SeparationApproved {
-			return s.store.PatchEmployee(ctx, orgID, emp.ID, bson.M{"status": domain.EmployeeServingNotice})
+		if onApproved != nil {
+			return onApproved(ctx)
 		}
 		return nil
 	})
@@ -428,12 +440,29 @@ func (s *Server) decide(w http.ResponseWriter, r *http.Request, approve bool) {
 		httpx.Fail(w, r, transitionErr(err))
 		return
 	}
+	var onApproved func(ctx context.Context) error
+	if final {
+		org, err := s.store.OrganizationByID(r.Context(), sep.OrganizationID)
+		if err != nil {
+			httpx.Fail(w, r, err)
+			return
+		}
+		emp, err := s.store.EmployeeByID(r.Context(), sep.OrganizationID, sep.EmployeeID)
+		if err != nil {
+			httpx.Fail(w, r, err)
+			return
+		}
+		if onApproved, err = s.approvedSideEffects(r.Context(), org, emp, sep, now); err != nil {
+			httpx.Fail(w, r, err)
+			return
+		}
+	}
 	err = s.store.Atomic(r.Context(), func(ctx context.Context) error {
 		if err := s.store.SaveSeparation(ctx, sep, in.Version); err != nil {
 			return err
 		}
-		if final {
-			return s.store.PatchEmployee(ctx, sep.OrganizationID, sep.EmployeeID, bson.M{"status": domain.EmployeeServingNotice})
+		if onApproved != nil {
+			return onApproved(ctx)
 		}
 		return nil
 	})
@@ -493,6 +522,9 @@ func (s *Server) handleWithdrawSeparation(w http.ResponseWriter, r *http.Request
 			return err
 		}
 		if wasApproved {
+			if err := s.store.CancelClearance(ctx, sep.OrganizationID, sep.ID); err != nil {
+				return err
+			}
 			return s.store.PatchEmployee(ctx, sep.OrganizationID, sep.EmployeeID, bson.M{"status": domain.EmployeeActive})
 		}
 		return nil
@@ -545,7 +577,14 @@ func (s *Server) handleSetLastWorkingDay(w http.ResponseWriter, r *http.Request)
 		Status: sep.Status, At: time.Now().UTC(), By: &p.User.ID,
 		Note: "Last working day changed from " + old.String() + " to " + day.String() + ": " + strings.TrimSpace(in.Reason),
 	})
-	if err := s.store.SaveSeparation(r.Context(), sep, in.Version); err != nil {
+	err = s.store.Atomic(r.Context(), func(ctx context.Context) error {
+		if err := s.store.SaveSeparation(ctx, sep, in.Version); err != nil {
+			return err
+		}
+		// Open clearance items that were due on the old last working day move with it.
+		return s.store.ShiftClearanceDueDates(ctx, sep.OrganizationID, sep.ID, old, day)
+	})
+	if err != nil {
 		httpx.Fail(w, r, storeErr(err, "Separation"))
 		return
 	}
@@ -583,6 +622,16 @@ func (s *Server) handleCompleteSeparation(w http.ResponseWriter, r *http.Request
 	}
 	if err := sep.Complete(p.User.ID, emp, today, time.Now().UTC()); err != nil {
 		httpx.Fail(w, r, transitionErr(err))
+		return
+	}
+	// Clearance must be closed, or overridden by HR, before the employee leaves the books.
+	clearance, err := s.store.ClearanceBySeparation(r.Context(), sep.OrganizationID, sep.ID)
+	if err != nil && !errors.Is(err, store.ErrNotFound) {
+		httpx.Fail(w, r, err)
+		return
+	}
+	if err == nil && !clearance.ReadyForCompletion() {
+		httpx.Fail(w, r, httpx.Conflict(fmt.Sprintf("%d clearance item(s) are still open. Close them, or record a clearance override, before completing the separation.", clearance.OpenItems())))
 		return
 	}
 	end := sep.LastWorkingDay
