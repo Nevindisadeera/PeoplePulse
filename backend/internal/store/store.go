@@ -97,6 +97,12 @@ func (s *Store) EnsureIndexes(ctx context.Context) error {
 			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "pendingUserId", Value: 1}}, Options: options.Index().SetSparse(true)},
 			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "pendingRoleId", Value: 1}}, Options: options.Index().SetSparse(true)},
 		},
+		"exit_clearances": {
+			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "separationId", Value: 1}}, Options: unique()},
+			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "status", Value: 1}, {Key: "createdAt", Value: -1}}},
+			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "items.userId", Value: 1}}},
+			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "items.roleId", Value: 1}}},
+		},
 		"audit_logs": {
 			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "at", Value: -1}}},
 			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "entityType", Value: 1}, {Key: "entityId", Value: 1}}},

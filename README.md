@@ -81,8 +81,15 @@ All paths are under `/api/v1`.
 | POST | `/separations/{id}/withdraw` | Withdraw a pending request, or cancel an approved one (HR) |
 | PATCH | `/separations/{id}/last-working-day` | Change the last working day, with a reason |
 | POST | `/separations/{id}/complete` | Close the employment period on or after the last working day |
+| PUT | `/settings/clearance-template` | Replace the exit clearance checklist template |
+| GET | `/clearances` | List clearance checklists |
+| GET | `/clearances/{id}` | View a checklist (HR, the departing employee, or an assignee) |
+| PATCH | `/clearances/{id}/items/{itemId}` | Set an item to pending, cleared, not applicable or blocked |
+| POST | `/clearances/{id}/items` | Add an extra item to one checklist |
+| POST | `/clearances/{id}/override` | Allow the separation to be completed with open items, with a reason |
+| GET | `/me/clearance-tasks` | Open clearance items assigned to me |
 
-Edits to departments, employees and separations send the record's current `version`; a stale version returns `409`.
+Edits to departments, employees, separations and clearances send the record's current `version`; a stale version returns `409`.
 
 ### CSV import format
 
@@ -100,7 +107,7 @@ go test ./...
 1. Requirements analysis and UI/UX design
 2. Project setup and authentication (done)
 3. Employee and department management (backend done)
-4. Resignation and exit management (separation workflow done; clearance, exit interviews and notifications next)
+4. Resignation and exit management (separation workflow and exit clearance done; exit interviews and notifications next)
 5. HR dashboard and analytics
 6. n8n workflow automation
 7. Testing, security and deployment

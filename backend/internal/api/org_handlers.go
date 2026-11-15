@@ -26,9 +26,13 @@ func viewOrg(o *domain.Organization) orgView {
 	if chain == nil {
 		chain = []domain.ChainStep{}
 	}
+	template := o.Settings.ClearanceTemplate
+	if template == nil {
+		template = []domain.ClearanceTemplateItem{}
+	}
 	return orgView{Organization: o, Settings: map[string]any{
 		"employmentTypes": o.EmploymentTypes(), "noticePeriodDays": o.NoticePeriodDays(),
-		"separationReasons": o.SeparationReasons(), "approvalChain": chain,
+		"separationReasons": o.SeparationReasons(), "approvalChain": chain, "clearanceTemplate": template,
 	}}
 }
 

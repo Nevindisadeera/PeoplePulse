@@ -108,6 +108,15 @@ func (s *Server) Routes() http.Handler {
 			r.With(s.require(domain.PermSeparationApprove)).Post("/separations/{id}/reject", s.handleRejectSeparation)
 			r.With(s.require(domain.PermSeparationManage)).Patch("/separations/{id}/last-working-day", s.handleSetLastWorkingDay)
 			r.With(s.require(domain.PermSeparationManage)).Post("/separations/{id}/complete", s.handleCompleteSeparation)
+
+			// Clearance: any signed-in user can see their own tasks; record access is checked in the handlers.
+			r.With(s.require(domain.PermOrgSettingsManage)).Put("/settings/clearance-template", s.handlePutClearanceTemplate)
+			r.Get("/me/clearance-tasks", s.handleMyClearanceTasks)
+			r.With(s.require(domain.PermClearanceRead, domain.PermClearanceManage)).Get("/clearances", s.handleListClearances)
+			r.Get("/clearances/{id}", s.handleGetClearance)
+			r.With(s.require(domain.PermClearanceManage, domain.PermClearanceUpdateOwn)).Patch("/clearances/{id}/items/{itemId}", s.handleUpdateClearanceItem)
+			r.With(s.require(domain.PermClearanceManage)).Post("/clearances/{id}/items", s.handleAddClearanceItem)
+			r.With(s.require(domain.PermClearanceOverride)).Post("/clearances/{id}/override", s.handleOverrideClearance)
 		})
 	})
 
