@@ -26,7 +26,38 @@ type EmploymentType struct {
 }
 
 type OrgSettings struct {
-	EmploymentTypes []EmploymentType `bson:"employmentTypes" json:"employmentTypes"`
+	EmploymentTypes   []EmploymentType   `bson:"employmentTypes" json:"employmentTypes"`
+	NoticePeriodDays  *int               `bson:"noticePeriodDays,omitempty" json:"noticePeriodDays"`
+	SeparationReasons []SeparationReason `bson:"separationReasons,omitempty" json:"separationReasons"`
+	ApprovalChain     []ChainStep        `bson:"approvalChain,omitempty" json:"approvalChain"`
+}
+
+const DefaultNoticePeriodDays = 30
+
+// NoticePeriodDays returns the configured default notice period.
+func (o *Organization) NoticePeriodDays() int {
+	if o.Settings.NoticePeriodDays == nil {
+		return DefaultNoticePeriodDays
+	}
+	return *o.Settings.NoticePeriodDays
+}
+
+// SeparationReasons returns the configured reasons, or the defaults when none are set.
+func (o *Organization) SeparationReasons() []SeparationReason {
+	if len(o.Settings.SeparationReasons) == 0 {
+		return DefaultSeparationReasons()
+	}
+	return o.Settings.SeparationReasons
+}
+
+// Reason finds an active separation reason by code.
+func (o *Organization) Reason(code string) (SeparationReason, bool) {
+	for _, r := range o.SeparationReasons() {
+		if r.Code == code && r.Active {
+			return r, true
+		}
+	}
+	return SeparationReason{}, false
 }
 
 func DefaultEmploymentTypes() []EmploymentType {

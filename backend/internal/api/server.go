@@ -93,6 +93,21 @@ func (s *Server) Routes() http.Handler {
 			r.With(s.require(domain.PermEmployeeManage)).Post("/employees/import", s.handleImportEmployees)
 			r.With(s.require(domain.PermEmployeeManage)).Patch("/employees/{id}", s.handleUpdateEmployee)
 			r.With(s.require(domain.PermEmployeeManage)).Post("/employees/{id}/transfers", s.handleTransferEmployee)
+
+			r.With(s.require(domain.PermOrgSettingsManage)).Put("/settings/separation-reasons", s.handlePutSeparationReasons)
+			r.With(s.require(domain.PermOrgSettingsManage)).Put("/settings/approval-chain", s.handlePutApprovalChain)
+
+			// Separations: visibility and step ownership are checked per record in the handlers.
+			involved := s.require(domain.PermSeparationRead, domain.PermSeparationSubmit, domain.PermSeparationManage, domain.PermSeparationApprove)
+			submitOrManage := s.require(domain.PermSeparationSubmit, domain.PermSeparationManage)
+			r.With(involved).Get("/separations", s.handleListSeparations)
+			r.With(involved).Get("/separations/{id}", s.handleGetSeparation)
+			r.With(submitOrManage).Post("/separations", s.handleCreateSeparation)
+			r.With(submitOrManage).Post("/separations/{id}/withdraw", s.handleWithdrawSeparation)
+			r.With(s.require(domain.PermSeparationApprove)).Post("/separations/{id}/approve", s.handleApproveSeparation)
+			r.With(s.require(domain.PermSeparationApprove)).Post("/separations/{id}/reject", s.handleRejectSeparation)
+			r.With(s.require(domain.PermSeparationManage)).Patch("/separations/{id}/last-working-day", s.handleSetLastWorkingDay)
+			r.With(s.require(domain.PermSeparationManage)).Post("/separations/{id}/complete", s.handleCompleteSeparation)
 		})
 	})
 

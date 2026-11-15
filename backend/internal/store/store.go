@@ -20,6 +20,8 @@ var (
 type Store struct {
 	Client *mongo.Client
 	DB     *mongo.Database
+	// Transactions is true when the deployment is a replica set or sharded cluster.
+	Transactions bool
 }
 
 func Connect(ctx context.Context, uri, dbName string) (*Store, error) {
@@ -32,7 +34,14 @@ func Connect(ctx context.Context, uri, dbName string) (*Store, error) {
 	if err := client.Ping(pingCtx, nil); err != nil {
 		return nil, err
 	}
-	return &Store{Client: client, DB: client.Database(dbName)}, nil
+	var hello struct {
+		SetName string `bson:"setName"`
+		Msg     string `bson:"msg"`
+	}
+	if err := client.Database("admin").RunCommand(pingCtx, bson.D{{Key: "hello", Value: 1}}).Decode(&hello); err != nil {
+		return nil, err
+	}
+	return &Store{Client: client, DB: client.Database(dbName), Transactions: hello.SetName != "" || hello.Msg == "isdbgrid"}, nil
 }
 
 func (s *Store) Ping(ctx context.Context) error { return s.Client.Ping(ctx, nil) }
@@ -78,6 +87,15 @@ func (s *Store) EnsureIndexes(ctx context.Context) error {
 			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "employeeNumber", Value: 1}}, Options: unique()},
 			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "status", Value: 1}, {Key: "departmentId", Value: 1}}},
 			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "joinDate", Value: 1}, {Key: "endDate", Value: 1}}},
+		},
+		"separations": {
+			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "status", Value: 1}, {Key: "lastWorkingDay", Value: 1}}},
+			// At most one open separation per employee, enforced by the database.
+			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "employeeId", Value: 1}}, Options: unique().SetName("one_open_separation_per_employee").
+				SetPartialFilterExpression(bson.M{"status": bson.M{"$in": bson.A{"pending_approval", "approved"}}})},
+			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "employeeId", Value: 1}, {Key: "createdAt", Value: -1}}},
+			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "pendingUserId", Value: 1}}, Options: options.Index().SetSparse(true)},
+			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "pendingRoleId", Value: 1}}, Options: options.Index().SetSparse(true)},
 		},
 		"audit_logs": {
 			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "at", Value: -1}}},
