@@ -1,0 +1,6 @@
+.env
+*.exe
+bin/
+node_modules/
+.next/
+.DS_Store

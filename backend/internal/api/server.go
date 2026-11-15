@@ -1,0 +1,218 @@
+// Package api wires HTTP routes to handlers.
+package api
+
+import (
+	"context"
+	"crypto/rand"
+	"encoding/hex"
+	"log/slog"
+	"net"
+	"net/http"
+	"strings"
+	"time"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"go.mongodb.org/mongo-driver/v2/bson"
+
+	"peoplepulse/internal/auth"
+	"peoplepulse/internal/config"
+	"peoplepulse/internal/domain"
+	"peoplepulse/internal/httpx"
+	"peoplepulse/internal/store"
+)
+
+type Server struct {
+	cfg     config.Config
+	store   *store.Store
+	tokens  *auth.TokenMaker
+	limiter *auth.Limiter
+}
+
+func NewServer(cfg config.Config, st *store.Store) *Server {
+	return &Server{
+		cfg:     cfg,
+		store:   st,
+		tokens:  auth.NewTokenMaker(cfg.JWTSecret, cfg.AccessTTL),
+		limiter: auth.NewLimiter(5, 15*time.Minute),
+	}
+}
+
+func (s *Server) Routes() http.Handler {
+	r := chi.NewRouter()
+	r.Use(requestID, s.logRequests, middleware.Recoverer, s.cors)
+
+	r.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) {
+		httpx.JSON(w, 200, map[string]string{"status": "ok"})
+	})
+	r.Get("/readyz", func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+		defer cancel()
+		if err := s.store.Ping(ctx); err != nil {
+			httpx.JSON(w, 503, map[string]string{"status": "database unavailable"})
+			return
+		}
+		httpx.JSON(w, 200, map[string]string{"status": "ready"})
+	})
+
+	r.Route("/api/v1", func(r chi.Router) {
+		r.Post("/auth/login", s.handleLogin)
+		r.Post("/auth/refresh", s.handleRefresh)
+		r.Post("/auth/logout", s.handleLogout)
+		r.Post("/auth/accept-invite", s.handleAcceptInvite)
+
+		r.Group(func(r chi.Router) {
+			r.Use(s.authenticate)
+			r.Get("/me", s.handleMe)
+
+			r.With(s.require(domain.PermUserRead)).Get("/users", s.handleListUsers)
+			r.With(s.require(domain.PermUserManage)).Post("/users", s.handleInviteUser)
+			r.With(s.require(domain.PermUserManage)).Patch("/users/{id}", s.handleUpdateUser)
+
+			r.With(s.require(domain.PermRoleRead)).Get("/roles", s.handleListRoles)
+			r.With(s.require(domain.PermRoleRead)).Get("/permissions", s.handleListPermissions)
+			r.With(s.require(domain.PermRoleManage)).Post("/roles", s.handleCreateRole)
+			r.With(s.require(domain.PermRoleManage)).Patch("/roles/{id}", s.handleUpdateRole)
+		})
+	})
+
+	r.NotFound(func(w http.ResponseWriter, r *http.Request) { httpx.Fail(w, r, httpx.NotFound("Route")) })
+	return r
+}
+
+// ---- principal and middleware ----
+
+type Principal struct {
+	User  *domain.User
+	Role  *domain.Role
+	perms map[string]bool
+}
+
+func (p *Principal) Can(perm string) bool { return p.perms[perm] }
+
+type ctxKey struct{}
+
+func principal(r *http.Request) *Principal {
+	p, _ := r.Context().Value(ctxKey{}).(*Principal)
+	return p
+}
+
+// authenticate verifies the access token, then loads the user and role fresh
+// so deactivation and permission changes take effect immediately.
+func (s *Server) authenticate(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		raw, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
+		if !ok || raw == "" {
+			httpx.Fail(w, r, httpx.Unauthorized("Sign in to continue."))
+			return
+		}
+		claims, err := s.tokens.Parse(raw)
+		if err != nil {
+			httpx.Fail(w, r, httpx.Unauthorized("Your session has expired. Sign in again."))
+			return
+		}
+		userID, err1 := bson.ObjectIDFromHex(claims.Subject)
+		orgID, err2 := bson.ObjectIDFromHex(claims.Org)
+		if err1 != nil || err2 != nil {
+			httpx.Fail(w, r, httpx.Unauthorized("Sign in to continue."))
+			return
+		}
+		user, err := s.store.UserByID(r.Context(), orgID, userID)
+		if err != nil || user.Status != domain.UserStatusActive {
+			httpx.Fail(w, r, httpx.Unauthorized("Sign in to continue."))
+			return
+		}
+		role, err := s.store.RoleByID(r.Context(), orgID, user.RoleID)
+		if err != nil {
+			httpx.Fail(w, r, httpx.Forbidden())
+			return
+		}
+		p := &Principal{User: user, Role: role, perms: map[string]bool{}}
+		for _, k := range role.Permissions {
+			p.perms[k] = true
+		}
+		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ctxKey{}, p)))
+	})
+}
+
+func (s *Server) require(perm string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if p := principal(r); p == nil || !p.Can(perm) {
+				httpx.Fail(w, r, httpx.Forbidden())
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// requestID tags each request with a random ID. chi's built-in version embeds
+// the server's hostname, which should not be sent to clients.
+func requestID(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		b := make([]byte, 8)
+		_, _ = rand.Read(b)
+		id := "req_" + hex.EncodeToString(b)
+		w.Header().Set("X-Request-Id", id)
+		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), middleware.RequestIDKey, id)))
+	})
+}
+
+func (s *Server) logRequests(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+		start := time.Now()
+		next.ServeHTTP(ww, r)
+		slog.Info("request", "requestId", middleware.GetReqID(r.Context()), "method", r.Method,
+			"path", r.URL.Path, "status", ww.Status(), "ms", time.Since(start).Milliseconds())
+	})
+}
+
+func (s *Server) cors(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if origin := r.Header.Get("Origin"); origin != "" && origin == s.cfg.CORSOrigin {
+			h := w.Header()
+			h.Set("Access-Control-Allow-Origin", origin)
+			h.Set("Access-Control-Allow-Credentials", "true")
+			h.Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
+			h.Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+			h.Add("Vary", "Origin")
+		}
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+// ---- shared helpers ----
+
+func clientIP(r *http.Request) string {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+	return host
+}
+
+// audit records a business action. A failed audit write is logged, not returned.
+func (s *Server) audit(r *http.Request, orgID bson.ObjectID, actor *bson.ObjectID, action, entityType, entityID string, changes map[string]any) {
+	entry := &domain.AuditLog{
+		ID: bson.NewObjectID(), OrganizationID: orgID, ActorID: actor, ActorType: "user",
+		Action: action, EntityType: entityType, EntityID: entityID, Changes: changes,
+		IP: clientIP(r), At: time.Now().UTC(),
+	}
+	if err := s.store.InsertAudit(r.Context(), entry); err != nil {
+		slog.Error("audit write failed", "action", action, "err", err)
+	}
+}
+
+func pathID(r *http.Request) (bson.ObjectID, error) {
+	id, err := bson.ObjectIDFromHex(chi.URLParam(r, "id"))
+	if err != nil {
+		return id, httpx.NotFound("Record")
+	}
+	return id, nil
+}

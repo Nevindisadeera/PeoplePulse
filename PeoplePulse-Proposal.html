@@ -1,0 +1,892 @@
+<title>PeoplePulse Project Proposal</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column (proposal document), cover block first, numbered sections, tables scroll in their own containers. */
+:root {
+  --bg: #f6f8f9;
+  --surface: #ffffff;
+  --ink: #14232b;
+  --muted: #55676f;
+  --line: #d5dee2;
+  --accent: #0b6e75;
+  --accent-soft: #e0f0f0;
+  --warn: #8a5a00;
+  --warn-soft: #fbf1d9;
+  --cover-bg: #0f2a33;
+  --cover-ink: #eef6f6;
+  --cover-muted: #a9c3c6;
+  --pulse: #4fd1c5;
+  --font-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", Consolas, "Courier New", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e171b; --surface: #16232a; --ink: #e4ecee; --muted: #9db0b6; --line: #2b3d45;
+    --accent: #5fd0c8; --accent-soft: #17343a; --warn: #f0c060; --warn-soft: #33290f;
+    --cover-bg: #0a1d24; --cover-ink: #eef6f6; --cover-muted: #a9c3c6; --pulse: #4fd1c5;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e171b; --surface: #16232a; --ink: #e4ecee; --muted: #9db0b6; --line: #2b3d45;
+  --accent: #5fd0c8; --accent-soft: #17343a; --warn: #f0c060; --warn-soft: #33290f;
+  --cover-bg: #0a1d24; --cover-ink: #eef6f6; --cover-muted: #a9c3c6; --pulse: #4fd1c5;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.65; }
+.wrap { max-width: 880px; margin: 0 auto; padding-block: 32px 80px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.cover { background: var(--cover-bg); color: var(--cover-ink); border-radius: 6px; padding: 56px 40px 40px; display: flex; flex-direction: column; gap: 28px; }
+.cover .kicker { font-family: var(--font-mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--cover-muted); }
+.cover h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(2.2rem, 7vw, 3.6rem); line-height: 1.05; margin: 0; text-wrap: balance; }
+.cover .sub { font-size: 1.15rem; color: var(--cover-muted); margin: 0; max-width: 34em; }
+.cover svg { width: 100%; height: 56px; display: block; }
+.cover dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; margin: 0; border-top: 1px solid rgba(255,255,255,.18); padding-top: 24px; }
+.cover dt { font-family: var(--font-mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--cover-muted); }
+.cover dd { margin: 4px 0 0; font-weight: 500; }
+h2 { font-family: var(--font-display); font-weight: 600; font-size: 1.7rem; line-height: 1.2; margin: 64px 0 16px; padding-top: 20px; border-top: 2px solid var(--ink); text-wrap: balance; }
+h2 .n { color: var(--accent); margin-right: .5em; font-variant-numeric: tabular-nums; }
+h3 { font-family: var(--font-display); font-weight: 600; font-size: 1.2rem; margin: 36px 0 10px; text-wrap: balance; }
+h4 { font-family: var(--font-body); font-weight: 600; font-size: 1rem; margin: 24px 0 6px; }
+p, ul, ol { max-width: 68ch; }
+p { margin: 0 0 14px; }
+ul, ol { margin: 0 0 14px; padding-left: 1.3em; }
+li { margin-bottom: 6px; }
+a { color: var(--accent); }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+code, .mono { font-family: var(--font-mono); font-size: .86em; }
+code { background: var(--accent-soft); padding: 1px 5px; border-radius: 3px; overflow-wrap: anywhere; }
+.toc { columns: 2 260px; column-gap: 40px; padding: 0; list-style: none; max-width: none; font-variant-numeric: tabular-nums; }
+.toc li { break-inside: avoid; margin: 0; padding: 5px 0; border-bottom: 1px solid var(--line); }
+.toc a { text-decoration: none; color: var(--ink); display: block; }
+.toc a:hover { color: var(--accent); }
+.toc .n { display: inline-block; width: 2.2em; color: var(--accent); font-family: var(--font-mono); font-size: .85em; }
+.tw { overflow-x: auto; margin: 0 0 20px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; line-height: 1.5; }
+.tw.wide table { min-width: 640px; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+tr:last-child > th, tr:last-child > td { border-bottom: 0; }
+thead th { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 500; background: var(--bg); }
+tbody th { font-weight: 600; width: 24%; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tfoot td, tfoot th { font-weight: 600; border-top: 2px solid var(--ink); }
+.formula { font-family: var(--font-mono); font-size: .88rem; background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--accent); padding: 12px 16px; margin: 0 0 14px; overflow-x: auto; white-space: pre-wrap; }
+.note { background: var(--warn-soft); border: 1px solid var(--line); padding: 12px 16px; border-radius: 4px; margin: 0 0 18px; max-width: 68ch; font-size: .95rem; }
+.note b:first-child { color: var(--warn); }
+.pill { display: inline-block; font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; padding: 1px 8px; border-radius: 10px; border: 1px solid var(--line); white-space: nowrap; }
+.pill.mvp { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+.pill.later { color: var(--muted); }
+pre.mermaid, pre.code { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 16px; overflow-x: auto; margin: 0 0 20px; font-family: var(--font-mono); font-size: .82rem; line-height: 1.5; }
+.cap { font-size: .85rem; color: var(--muted); margin: -12px 0 20px; }
+.lede { font-size: 1.1rem; }
+@media (max-width: 560px) { .cover { padding: 36px 20px 28px; } tbody th { width: 34%; } }
+@media print { body { background: #fff; } h2 { break-after: avoid; } .tw, pre { break-inside: avoid; } }
+</style>
+
+<div class="wrap">
+
+<header class="cover">
+  <div class="kicker">Software Project Proposal</div>
+  <h1>PeoplePulse</h1>
+  <p class="sub">Employee Turnover &amp; Retention Management Platform. A reusable, organization-independent web application for tracking workforce changes and coordinating employee exits.</p>
+  <svg viewBox="0 0 800 56" preserveAspectRatio="none" role="img" aria-label="Pulse line">
+    <polyline fill="none" stroke="var(--pulse)" stroke-width="2" points="0,34 250,34 275,34 290,12 308,50 324,22 338,34 520,34 536,24 548,42 560,34 800,34"/>
+  </svg>
+  <dl>
+    <div><dt>Prepared by</dt><dd>Nevindi Sadeera Lokuliyanage</dd></div>
+    <div><dt>Position</dt><dd>Associate Software Engineer</dd></div>
+    <div><dt>Date</dt><dd>15 November 2026</dd></div>
+    <div><dt>Version</dt><dd>1.0 (draft for review)</dd></div>
+  </dl>
+</header>
+
+<h2 id="contents" style="border-top:0">Contents</h2>
+<ol class="toc">
+  <li><a href="#s2"><span class="n">2</span>Executive Summary</a></li>
+  <li><a href="#s3"><span class="n">3</span>Project Background</a></li>
+  <li><a href="#s4"><span class="n">4</span>Problem Statement</a></li>
+  <li><a href="#s5"><span class="n">5</span>Project Objectives</a></li>
+  <li><a href="#s6"><span class="n">6</span>Proposed Solution</a></li>
+  <li><a href="#s7"><span class="n">7</span>Project Scope</a></li>
+  <li><a href="#s8"><span class="n">8</span>Functional Requirements</a></li>
+  <li><a href="#s9"><span class="n">9</span>Non-Functional Requirements</a></li>
+  <li><a href="#s10"><span class="n">10</span>Technology Stack</a></li>
+  <li><a href="#s11"><span class="n">11</span>System Architecture</a></li>
+  <li><a href="#s12"><span class="n">12</span>Database Design Overview</a></li>
+  <li><a href="#s13"><span class="n">13</span>Automation Workflows</a></li>
+  <li><a href="#s14"><span class="n">14</span>Implementation Methodology</a></li>
+  <li><a href="#s15"><span class="n">15</span>Development Timeline and Estimates</a></li>
+  <li><a href="#s16"><span class="n">16</span>Expected Outcomes</a></li>
+  <li><a href="#s17"><span class="n">17</span>Risks and Mitigation</a></li>
+  <li><a href="#s18"><span class="n">18</span>Future Enhancements</a></li>
+  <li><a href="#s19"><span class="n">19</span>Conclusion</a></li>
+  <li><a href="#sA"><span class="n">A</span>Requirements Analysis: Gaps and Resolutions</a></li>
+</ol>
+
+<!-- ============ 2 ============ -->
+<h2 id="s2"><span class="n">2</span>Executive Summary</h2>
+<p class="lede">PeoplePulse is a proposed web application that gives an HR team one place to keep employee records, process resignations and other separations, coordinate exit clearance, record exit feedback, and report on turnover and retention.</p>
+<p>The product is designed for general business use. Departments, roles, approval chains, separation reasons, clearance checklists and exit interview questions are configuration data that each organization sets for itself. Nothing in the design assumes a particular industry or HR policy.</p>
+<p>The system uses a Next.js and TypeScript frontend, a Go REST API, MongoDB for storage, and n8n for scheduled and event-driven notifications. The Go API owns all business rules, authorization and data integrity. n8n only schedules, formats and delivers messages.</p>
+<p>The scope is sized for one software engineer. The minimum viable product (MVP) covers the twelve modules in this proposal at a deliberately modest depth, and the estimated effort is 75 to 101 development days before contingency. This is an estimate with stated assumptions, not a delivery commitment.</p>
+<p>The proposal makes no claim that software reduces turnover. PeoplePulse is intended to make workforce changes visible, consistently measured and easier to administer, so that the people responsible for retention decisions work from better information.</p>
+
+<!-- ============ 3 ============ -->
+<h2 id="s3"><span class="n">3</span>Project Background</h2>
+<p>Employee turnover touches several HR activities at once: keeping records current, processing a resignation through its approvals, recovering assets and access before the last working day, capturing why the person left, and reporting the pattern to management. In many organizations these activities are handled with a mix of spreadsheets, paper forms, email threads and unconnected software.</p>
+<p>When that is the case, three things tend to be hard: knowing the current state of any one exit, calculating turnover consistently from month to month, and seeing patterns across departments or over time.</p>
+<div class="note"><b>Status of these statements.</b> The background and problems described in sections 3 and 4 are working assumptions drawn from the project brief. They have not been validated with a specific organization. Phase 1 of the roadmap includes validating them with HR practitioners, and requirements may change as a result.</div>
+
+<!-- ============ 4 ============ -->
+<h2 id="s4"><span class="n">4</span>Problem Statement</h2>
+<p>The project addresses the following potential problems. Each is a hypothesis to be confirmed during requirements analysis.</p>
+<div class="tw wide"><table>
+<thead><tr><th>#</th><th>Potential problem</th><th>Possible consequence</th><th>How PeoplePulse responds</th></tr></thead>
+<tbody>
+<tr><td>P1</td><td>Employee data is spread across spreadsheets and documents.</td><td>Conflicting records, and no reliable joining and leaving history.</td><td>One employee record per employment period, with dated department history.</td></tr>
+<tr><td>P2</td><td>Resignations are handled by email or paper.</td><td>Approvals stall and the status of a request is unclear.</td><td>A tracked separation workflow with a configurable approval chain.</td></tr>
+<tr><td>P3</td><td>Exit clearance depends on people remembering to follow up.</td><td>Assets, access or settlements are missed at the last working day.</td><td>Checklists generated from a template, with assignees and reminders.</td></tr>
+<tr><td>P4</td><td>Exit reasons are not recorded in a consistent form.</td><td>Reasons for leaving cannot be compared or summarized.</td><td>Configurable reason list and structured exit interview records.</td></tr>
+<tr><td>P5</td><td>Turnover figures are calculated by hand, with varying methods.</td><td>Figures that cannot be compared across periods or departments.</td><td>Fixed, documented metric definitions calculated by the system.</td></tr>
+<tr><td>P6</td><td>Routine HR notifications are sent manually.</td><td>Late or forgotten reminders.</td><td>Event-driven and scheduled notifications through n8n.</td></tr>
+</tbody></table></div>
+
+<!-- ============ 5 ============ -->
+<h2 id="s5"><span class="n">5</span>Project Objectives</h2>
+<div class="tw wide"><table>
+<thead><tr><th>#</th><th>Objective</th><th>How it will be judged</th></tr></thead>
+<tbody>
+<tr><td>O1</td><td>Centralize employee information.</td><td>Employee, department and employment-history data is maintained in one system with import from CSV.</td></tr>
+<tr><td>O2</td><td>Track joining and leaving history.</td><td>Headcount on any date within the data coverage period can be derived from stored records.</td></tr>
+<tr><td>O3</td><td>Monitor turnover and retention rates.</td><td>The metrics in section 8.13 are calculated by the API and match hand calculation on test data.</td></tr>
+<tr><td>O4</td><td>Identify department-wise workforce changes.</td><td>Joiners, leavers, transfers and rates can be viewed per department.</td></tr>
+<tr><td>O5</td><td>Manage resignation requests and approvals.</td><td>A resignation moves through a configurable approval chain with a full status history.</td></tr>
+<tr><td>O6</td><td>Coordinate exit clearance.</td><td>Each approved separation has a checklist with assignees, due dates and status.</td></tr>
+<tr><td>O7</td><td>Maintain exit reasons and feedback.</td><td>Every separation has a categorized reason; exit interviews are stored with restricted access.</td></tr>
+<tr><td>O8</td><td>Provide HR analytics and reports.</td><td>Dashboard, analytics views and CSV exports are available to authorized roles.</td></tr>
+<tr><td>O9</td><td>Automate repetitive notifications.</td><td>The six n8n workflows in section 13 run without manual action.</td></tr>
+<tr><td>O10</td><td>Support workforce planning decisions.</td><td>Management can see upcoming departures and trends. The system informs decisions and does not make them.</td></tr>
+</tbody></table></div>
+
+<!-- ============ 6 ============ -->
+<h2 id="s6"><span class="n">6</span>Proposed Solution</h2>
+<p>PeoplePulse is a browser-based application with four parts.</p>
+<ul>
+  <li><b>Web application</b> (Next.js, TypeScript, Tailwind CSS, Recharts). The interface for HR staff, managers, clearance officers and, optionally, employees.</li>
+  <li><b>REST API</b> (Go). The single authority for business rules, permissions, metric calculation and data validation.</li>
+  <li><b>Database</b> (MongoDB). Stores every organization's data, with each document tagged by organization.</li>
+  <li><b>Automation</b> (n8n). Receives signed events from the API, runs schedules, and delivers email notifications and reports.</li>
+</ul>
+<h3>Design principles</h3>
+<ul>
+  <li><b>Configuration instead of assumption.</b> Departments, roles, approval chains, separation reasons, employment types, clearance categories and interview questions are set by each organization.</li>
+  <li><b>One source of truth for rules.</b> The Go API decides what is allowed and what is due. The frontend and n8n never decide business outcomes on their own.</li>
+  <li><b>Derived metrics.</b> Headcount and turnover are calculated from employment dates, so figures can be recalculated and explained.</li>
+  <li><b>Honest numbers.</b> Every rate is shown with its numerator and denominator. Where data is missing or the group is very small, the system says so instead of showing a figure.</li>
+  <li><b>Tenant isolation from the first commit.</b> Every document carries an organization ID and every query is scoped by it, so a second organization can be added later without redesign.</li>
+  <li><b>Small enough for one engineer.</b> No microservices, message brokers or visual workflow designers.</li>
+</ul>
+<h3>Default user roles</h3>
+<p>Each organization starts with the roles below. An Organization Admin can adjust the permissions of each role or create new roles from the system's permission list.</p>
+<div class="tw"><table>
+<thead><tr><th>Role</th><th>Typical responsibilities</th></tr></thead>
+<tbody>
+<tr><th>Organization Admin</th><td>Organization settings, users, roles, audit log.</td></tr>
+<tr><th>HR Manager</th><td>All HR data, final approvals, involuntary separations, exit interviews, analytics, overrides.</td></tr>
+<tr><th>HR Officer</th><td>Day-to-day employee records, separations entered on behalf of employees, clearance follow-up.</td></tr>
+<tr><th>Department Manager</th><td>View own department, approve resignations of direct reports, complete handover clearance items.</td></tr>
+<tr><th>Clearance Officer</th><td>Update clearance items assigned to them (for example IT or Finance).</td></tr>
+<tr><th>Employee (optional)</th><td>Submit and track own resignation, complete own exit interview form.</td></tr>
+</tbody></table></div>
+
+<!-- ============ 7 ============ -->
+<h2 id="s7"><span class="n">7</span>Project Scope</h2>
+<h3>7.1 MVP and later features by module</h3>
+<div class="tw wide"><table>
+<thead><tr><th>Module</th><th><span class="pill mvp">MVP</span></th><th><span class="pill later">Later</span></th></tr></thead>
+<tbody>
+<tr><th>HR Dashboard</th><td>KPI cards, headcount trend, joiners and leavers chart, action lists.</td><td>User-customizable widgets.</td></tr>
+<tr><th>Employee Management</th><td>Create, edit, search, CSV import, transfer history, timeline.</td><td>Document attachments, custom fields, HRIS sync.</td></tr>
+<tr><th>Department Management</th><td>Create, edit, archive, optional parent department, department head.</td><td>Organization chart view, multiple sites.</td></tr>
+<tr><th>Resignation Management</th><td>Submission, sequential approval chain (up to three steps), withdrawal, HR-recorded separations of other types.</td><td>Conditional approval rules, delegation, letter attachments.</td></tr>
+<tr><th>Exit Interview</th><td>One configurable question template, HR-recorded or employee-completed, restricted access.</td><td>Multiple templates, anonymous surveys, text analysis.</td></tr>
+<tr><th>Clearance</th><td>Template-based checklist, assignees, status, HR override.</td><td>Asset register integration, per-department templates.</td></tr>
+<tr><th>Turnover Analytics</th><td>Monthly, rolling 12-month, department, voluntary and involuntary rates, trends.</td><td>Breakdown by custom attributes, benchmarks supplied by the organization.</td></tr>
+<tr><th>Retention Analytics</th><td>Period retention rate, tenure statistics, tenure bands of leavers.</td><td>Hire-cohort survival curves, new-hire retention at 90 days.</td></tr>
+<tr><th>Notifications</th><td>In-app notifications, email through n8n, six workflows.</td><td>Per-user channel preferences, chat tools, SMS.</td></tr>
+<tr><th>Reports and Audit</th><td>CSV exports, monthly HR report email, searchable audit log.</td><td>PDF exports, scheduled custom reports.</td></tr>
+<tr><th>Users and Roles</th><td>Invitation, login, password reset, default roles, editable permissions.</td><td>Single sign-on, multi-factor authentication.</td></tr>
+<tr><th>Organization Settings</th><td>Profile, time zone, notice period, reasons, employment types, approval chain, clearance and interview templates.</td><td>Self-service organization sign-up, branding.</td></tr>
+</tbody></table></div>
+
+<h3>7.2 Out of scope</h3>
+<ul>
+  <li>Payroll, final settlement calculation, attendance, leave, recruitment and performance management.</li>
+  <li>Predictive attrition models or any automated judgement about individual employees.</li>
+  <li>Native mobile applications. The web interface is responsive.</li>
+  <li>Self-service sign-up, subscription billing and a public multi-tenant service. The data model supports several organizations, but new organizations are created by a system operator in the MVP.</li>
+  <li>Legal advice on notice periods, data retention or labour law. These are configuration values the organization is responsible for.</li>
+</ul>
+
+<h3>7.3 Deliverables</h3>
+<div class="tw wide"><table>
+<thead><tr><th>Deliverable</th><th>Form</th><th>Phase</th></tr></thead>
+<tbody>
+<tr><td>Project proposal</td><td>This document.</td><td class="num">Pre-project</td></tr>
+<tr><td>Requirements specification</td><td>Validated functional and non-functional requirements with assumptions log.</td><td class="num">1</td></tr>
+<tr><td>UI/UX designs</td><td>Wireframes for key screens and a small component style guide.</td><td class="num">1</td></tr>
+<tr><td>System architecture</td><td>Architecture description and diagrams, kept in the repository.</td><td class="num">1 to 2</td></tr>
+<tr><td>Database design</td><td>Collection schemas, validators, index definitions and migration scripts.</td><td class="num">2 to 4</td></tr>
+<tr><td>REST API implementation</td><td>Go source code with an OpenAPI description.</td><td class="num">2 to 5</td></tr>
+<tr><td>Frontend application</td><td>Next.js source code.</td><td class="num">2 to 5</td></tr>
+<tr><td>n8n workflows</td><td>Six exported workflow JSON files with set-up notes.</td><td class="num">6</td></tr>
+<tr><td>Testing documentation</td><td>Test plan, automated test suites, test results summary.</td><td class="num">7</td></tr>
+<tr><td>Deployment instructions</td><td>Docker Compose files, environment reference, backup and restore procedure.</td><td class="num">7</td></tr>
+</tbody></table></div>
+
+<!-- ============ 8 ============ -->
+<h2 id="s8"><span class="n">8</span>Functional Requirements</h2>
+<p>All API paths below are relative to <code>/api/v1</code>. Every endpoint requires authentication unless stated, and every query is limited to the caller's organization. "HR" means HR Manager and HR Officer. Role names refer to the default roles; actual access is decided by permissions.</p>
+<p>The term <b>separation</b> is used for any exit from the organization. A resignation is one type of separation. Section A explains why the model is wider than resignations alone.</p>
+
+<h3>8.1 HR Dashboard</h3>
+<div class="tw"><table><tbody>
+<tr><th>Feature description</th><td>Landing page that summarizes current headcount, joiners and leavers for the selected period, rolling 12-month turnover, open separations, approvals waiting, overdue clearance items and upcoming last working days.</td></tr>
+<tr><th>User roles</th><td>Organization Admin and HR see the whole organization. Department Managers see their own departments only.</td></tr>
+<tr><th>User actions</th><td>Choose a period, filter by department, open the list behind any figure.</td></tr>
+<tr><th>Business rules</th><td>All figures come from the API using the definitions in 8.13. Rates show numerator and denominator. A widget shows "Not enough data" when its period starts before the analytics start date.</td></tr>
+<tr><th>Input fields</th><td>Period preset or from and to dates; department filter.</td></tr>
+<tr><th>Validation rules</th><td>From date is not after to date. Range is at most five years. Department belongs to the organization and to the caller's permitted scope.</td></tr>
+<tr><th>Expected outputs</th><td>KPI cards, headcount line chart, joiners and leavers bar chart, action lists with links.</td></tr>
+<tr><th>Related API</th><td><code>GET /dashboard/summary</code>, <code>GET /dashboard/action-items</code></td></tr>
+</tbody></table></div>
+
+<h3>8.2 Employee Management</h3>
+<div class="tw"><table><tbody>
+<tr><th>Feature description</th><td>Maintain employee records, including joining date, department history and employment status. This is the data from which headcount and turnover are derived.</td></tr>
+<tr><th>User roles</th><td>HR creates and edits. Department Managers view their own department. Employees view their own record.</td></tr>
+<tr><th>User actions</th><td>Add, edit, search, filter, import from CSV, transfer between departments, view an employee's timeline.</td></tr>
+<tr><th>Business rules</th><td>Employee number is unique within the organization. A department change is recorded as a dated transfer, never an overwrite. The end date is set by completing a separation; direct correction needs HR Manager permission and is audited. Records are never hard-deleted. A rehire creates a new record linked to the earlier one, so each employment period has its own dates.</td></tr>
+<tr><th>Input fields</th><td>Employee number, full name, work email, phone (optional), department, job title, employment type, line manager, join date, status.</td></tr>
+<tr><th>Validation rules</th><td>Join date is required and at most one year in the future. Email format is checked. The line manager is an active employee of the same organization and not the employee themselves. CSV import is validated row by row; an error report is shown before anything is saved.</td></tr>
+<tr><th>Expected outputs</th><td>Paginated employee list, employee profile with timeline of joining, transfers and separation, import result report.</td></tr>
+<tr><th>Related API</th><td><code>GET|POST /employees</code>, <code>GET|PATCH /employees/{id}</code>, <code>POST /employees/{id}/transfers</code>, <code>GET /employees/{id}/timeline</code>, <code>POST /employees/import</code></td></tr>
+</tbody></table></div>
+
+<h3>8.3 Department Management</h3>
+<div class="tw"><table><tbody>
+<tr><th>Feature description</th><td>Maintain the organization's own department structure.</td></tr>
+<tr><th>User roles</th><td>Organization Admin and HR Manager edit. All roles can view names.</td></tr>
+<tr><th>User actions</th><td>Create, rename, set parent department, assign department head, archive, restore.</td></tr>
+<tr><th>Business rules</th><td>Department code is unique within the organization. A department with active employees cannot be archived. Archived departments stay in historical reports. The hierarchy is optional and cannot contain a cycle.</td></tr>
+<tr><th>Input fields</th><td>Name, code, parent department (optional), department head (optional), status.</td></tr>
+<tr><th>Validation rules</th><td>Name is 2 to 100 characters. Code is 2 to 20 characters, letters, digits and hyphens. The head is an active employee of the organization.</td></tr>
+<tr><th>Expected outputs</th><td>Department list with current headcount, department detail page.</td></tr>
+<tr><th>Related API</th><td><code>GET|POST /departments</code>, <code>GET|PATCH /departments/{id}</code>, <code>POST /departments/{id}/archive</code>, <code>POST /departments/{id}/restore</code></td></tr>
+</tbody></table></div>
+
+<h3>8.4 Resignation Management</h3>
+<div class="tw"><table><tbody>
+<tr><th>Feature description</th><td>Record and process separations. Employee resignations go through the organization's approval chain. HR can also record other separation types, such as termination, end of contract or retirement.</td></tr>
+<tr><th>User roles</th><td>Employees submit their own resignation. HR submits on behalf of an employee and records other types. Approvers act on steps assigned to them. HR Manager records involuntary separations.</td></tr>
+<tr><th>User actions</th><td>Submit, approve or reject with comment, withdraw before final approval, change the last working day, mark as completed.</td></tr>
+<tr><th>Business rules</th><td>An employee has at most one open separation. The approval chain is copied from organization settings onto the request at submission, so later setting changes do not affect requests in progress. The proposed last working day defaults to the submission date plus the configured notice period; HR may change it with a reason. Nobody can approve their own resignation. If a step's approver cannot be resolved, for example no line manager, the step goes to the HR Manager role. On final approval the employee's status becomes "serving notice" and the clearance checklist is generated. HR-recorded separations skip the approval chain but require a specific permission. The reason's category sets the separation as voluntary, involuntary or other.</td></tr>
+<tr><th>Input fields</th><td>Employee, separation type, reason (from the organization's list), reason details, submission date, requested last working day, comments.</td></tr>
+<tr><th>Validation rules</th><td>The employee is active. The last working day is not before the submission date. A reason is required. A rejection requires a comment. Status changes follow the state diagram below; any other transition is refused.</td></tr>
+<tr><th>Expected outputs</th><td>Separation record with status history, in-app notifications, audit entries, events for n8n.</td></tr>
+<tr><th>Related API</th><td><code>GET|POST /separations</code>, <code>GET /separations/{id}</code>, <code>POST /separations/{id}/approve</code>, <code>/reject</code>, <code>/withdraw</code>, <code>/complete</code>, <code>PATCH /separations/{id}/last-working-day</code></td></tr>
+</tbody></table></div>
+<pre class="mermaid">
+stateDiagram-v2
+    [*] --> Submitted
+    Submitted --> PendingApproval: approval chain has steps
+    Submitted --> Approved: recorded by HR without chain
+    PendingApproval --> PendingApproval: step approved, next step
+    PendingApproval --> Approved: final step approved
+    PendingApproval --> Rejected: any step rejected
+    PendingApproval --> Withdrawn: employee withdraws
+    Approved --> Completed: last working day passed and clearance closed
+    Approved --> Withdrawn: HR Manager cancels with reason
+    Rejected --> [*]
+    Withdrawn --> [*]
+    Completed --> [*]
+</pre>
+<p class="cap">Figure 1. Separation status transitions enforced by the Go API.</p>
+
+<h3>8.5 Exit Interview Management</h3>
+<div class="tw"><table><tbody>
+<tr><th>Feature description</th><td>Record structured exit feedback for a separation, using the organization's own question template. Holding exit interviews is optional.</td></tr>
+<tr><th>User roles</th><td>HR configures the template, schedules and records interviews, and reads responses. An employee can complete their own form if the organization enables it. Department Managers have no access to individual responses.</td></tr>
+<tr><th>User actions</th><td>Edit the template, schedule an interview, record or submit answers, view an interview, view aggregated results.</td></tr>
+<tr><th>Business rules</th><td>One interview per separation. Questions are copied onto the interview when it is created. A submitted interview is locked; amendments need HR Manager permission and are audited. Aggregated results are shown only when at least the configured minimum number of responses exists (default five), to reduce the chance of identifying individuals.</td></tr>
+<tr><th>Input fields</th><td>Template questions (type: rating 1 to 5, single choice, free text; required flag). Interview date, interviewer, answers, overall notes.</td></tr>
+<tr><th>Validation rules</th><td>Required questions are answered. Ratings are whole numbers from 1 to 5. Choices match the template options. Free text is at most 2,000 characters.</td></tr>
+<tr><th>Expected outputs</th><td>Interview record, aggregated ratings and choice counts by period.</td></tr>
+<tr><th>Related API</th><td><code>GET|PUT /settings/exit-interview-template</code>, <code>POST /separations/{id}/exit-interview</code>, <code>GET /exit-interviews</code>, <code>GET|PATCH /exit-interviews/{id}</code>, <code>POST /exit-interviews/{id}/submit</code>, <code>GET /analytics/exit-feedback</code></td></tr>
+</tbody></table></div>
+
+<h3>8.6 Employee Clearance Management</h3>
+<div class="tw"><table><tbody>
+<tr><th>Feature description</th><td>Track the tasks that must be closed before an employee leaves, grouped by categories the organization defines, for example IT assets, finance, administration and work handover.</td></tr>
+<tr><th>User roles</th><td>HR sees all clearances and can update any item. Clearance Officers and Department Managers update items assigned to them.</td></tr>
+<tr><th>User actions</th><td>View assigned items, mark an item cleared, not applicable or blocked with remarks, add an extra item, override completion.</td></tr>
+<tr><th>Business rules</th><td>The checklist is created by the API when a separation receives final approval, copied from the organization's clearance template. Each item is assigned to a role, a named user or the employee's line manager. Items are due on the last working day unless changed. Clearance is complete when every item is cleared or not applicable. A separation cannot be completed with open items unless an HR Manager overrides with a reason, which is audited.</td></tr>
+<tr><th>Input fields</th><td>Item status, remarks, due date. For extra items: category, title, assignee.</td></tr>
+<tr><th>Validation rules</th><td>Only the assignee or HR can change an item. "Blocked" and "Not applicable" require remarks. The due date is not before the approval date.</td></tr>
+<tr><th>Expected outputs</th><td>Clearance checklist with progress, a "my clearance tasks" list, overdue list.</td></tr>
+<tr><th>Related API</th><td><code>GET /clearances</code>, <code>GET /clearances/{id}</code>, <code>POST /clearances/{id}/items</code>, <code>PATCH /clearances/{id}/items/{itemId}</code>, <code>POST /clearances/{id}/override</code>, <code>GET /me/clearance-tasks</code></td></tr>
+</tbody></table></div>
+
+<h3>8.7 Employee Turnover Analytics</h3>
+<div class="tw"><table><tbody>
+<tr><th>Feature description</th><td>Turnover rates and separation trends for the organization and for each department.</td></tr>
+<tr><th>User roles</th><td>Organization Admin and HR for the whole organization. Department Managers for their own departments.</td></tr>
+<tr><th>User actions</th><td>Choose period and grouping, filter by department, employment type and separation category, export the table behind a chart.</td></tr>
+<tr><th>Business rules</th><td>Definitions in 8.13 apply. Only completed separations with a last working day inside the period are counted. Rates for groups below the small-group threshold are flagged. Periods before the analytics start date are not calculated.</td></tr>
+<tr><th>Input fields</th><td>From and to month, grouping (month, department, reason, tenure band), filters.</td></tr>
+<tr><th>Validation rules</th><td>Same period rules as the dashboard. Filter values exist in the organization.</td></tr>
+<tr><th>Expected outputs</th><td>Monthly turnover line chart, department comparison bar chart, voluntary and involuntary split, reasons breakdown, data table with counts.</td></tr>
+<tr><th>Related API</th><td><code>GET /analytics/turnover</code>, <code>GET /analytics/turnover/by-department</code>, <code>GET /analytics/separations/trends</code></td></tr>
+</tbody></table></div>
+
+<h3>8.8 Employee Retention Analytics</h3>
+<div class="tw"><table><tbody>
+<tr><th>Feature description</th><td>Retention rate, tenure statistics and headcount movement.</td></tr>
+<tr><th>User roles</th><td>Same as turnover analytics.</td></tr>
+<tr><th>User actions</th><td>Choose a period, compare departments, view tenure distribution of current staff and of leavers.</td></tr>
+<tr><th>Business rules</th><td>Retention is measured on the group employed at the start of the period; people hired during the period are excluded. Mean and median tenure are both shown. Definitions in 8.13 apply.</td></tr>
+<tr><th>Input fields</th><td>Period, department filter, employment type filter.</td></tr>
+<tr><th>Validation rules</th><td>Same period rules as the dashboard.</td></tr>
+<tr><th>Expected outputs</th><td>Retention rate with counts, headcount trend with joiners and leavers, tenure band charts.</td></tr>
+<tr><th>Related API</th><td><code>GET /analytics/retention</code>, <code>GET /analytics/headcount</code>, <code>GET /analytics/tenure</code></td></tr>
+</tbody></table></div>
+
+<h3>8.9 Notifications and Alerts</h3>
+<div class="tw"><table><tbody>
+<tr><th>Feature description</th><td>Tell the right people when something needs their attention, inside the application and by email.</td></tr>
+<tr><th>User roles</th><td>All users receive notifications addressed to them. Organization Admin configures reminder timing.</td></tr>
+<tr><th>User actions</th><td>Open the notification list, mark as read, follow the link to the related record.</td></tr>
+<tr><th>Business rules</th><td>The API decides who is notified and creates the in-app notification. Email delivery is handed to n8n as an event. A failed email never blocks or reverses the business action. Delivery status is reported back by n8n and stored.</td></tr>
+<tr><th>Input fields</th><td>Settings: reminder lead days for last working day, reminder interval for overdue clearance, monthly report recipients.</td></tr>
+<tr><th>Validation rules</th><td>Lead days and intervals are whole numbers from 1 to 30. Recipients are active users of the organization.</td></tr>
+<tr><th>Expected outputs</th><td>Unread count, notification list, emails.</td></tr>
+<tr><th>Related API</th><td><code>GET /notifications</code>, <code>POST /notifications/{id}/read</code>, <code>POST /notifications/read-all</code>, <code>GET|PUT /settings/notifications</code></td></tr>
+</tbody></table></div>
+
+<h3>8.10 Reports and Audit Logs</h3>
+<div class="tw"><table><tbody>
+<tr><th>Feature description</th><td>Exportable registers and summaries, and a record of who did what.</td></tr>
+<tr><th>User roles</th><td>HR runs reports. Organization Admin and HR Manager read the audit log.</td></tr>
+<tr><th>User actions</th><td>Run a report with filters, download CSV, search the audit log by user, record, action and date.</td></tr>
+<tr><th>Business rules</th><td>Reports respect the same permission scope as screens. Each report states its period, filters and generation time. Audit entries are written by the API for logins, record changes, approvals, overrides, permission changes and exports. They cannot be edited or deleted through the application.</td></tr>
+<tr><th>Input fields</th><td>Report type, period, filters. Audit search: user, entity, action, date range.</td></tr>
+<tr><th>Validation rules</th><td>Period rules as elsewhere. Exports are limited to 50,000 rows per file.</td></tr>
+<tr><th>Expected outputs</th><td>Employee register, separation register, clearance status report, turnover summary, monthly HR report, audit log view.</td></tr>
+<tr><th>Related API</th><td><code>GET /reports/{type}</code> (JSON or <code>?format=csv</code>), <code>GET /reports/monthly-summary</code>, <code>GET /audit-logs</code></td></tr>
+</tbody></table></div>
+
+<h3>8.11 User and Role Management</h3>
+<div class="tw"><table><tbody>
+<tr><th>Feature description</th><td>Manage who can sign in and what they can do.</td></tr>
+<tr><th>User roles</th><td>Organization Admin manages users and roles. Every user manages their own password.</td></tr>
+<tr><th>User actions</th><td>Invite a user, link a user to an employee record, assign a role, deactivate, edit a role's permissions, create a role, sign in, sign out, reset password.</td></tr>
+<tr><th>Business rules</th><td>Access is checked against permissions, and roles are named sets of permissions. Default roles are created with each organization. At least one active Organization Admin must always exist. Users cannot change their own role. Invitation and reset links are single-use and expire. Deactivating a user ends their sessions.</td></tr>
+<tr><th>Input fields</th><td>Email, full name, role, linked employee (optional). Role: name, description, permissions. Password.</td></tr>
+<tr><th>Validation rules</th><td>Email is unique. Password is at least 12 characters and not on a common-password list. Repeated failed sign-ins are rate limited.</td></tr>
+<tr><th>Expected outputs</th><td>User list, role list with permission matrix, session cookies and access tokens.</td></tr>
+<tr><th>Related API</th><td><code>POST /auth/login</code>, <code>/auth/refresh</code>, <code>/auth/logout</code>, <code>/auth/forgot-password</code>, <code>/auth/reset-password</code>, <code>/auth/accept-invite</code>; <code>GET /me</code>; <code>GET|POST /users</code>, <code>PATCH /users/{id}</code>; <code>GET|POST /roles</code>, <code>PATCH /roles/{id}</code>; <code>GET /permissions</code></td></tr>
+</tbody></table></div>
+
+<h3>8.12 Organization Settings</h3>
+<div class="tw"><table><tbody>
+<tr><th>Feature description</th><td>The configuration that adapts PeoplePulse to one organization's policies.</td></tr>
+<tr><th>User roles</th><td>Organization Admin. HR Manager for HR-specific lists and templates.</td></tr>
+<tr><th>User actions</th><td>Edit the profile, lists, approval chain, templates and analytics settings.</td></tr>
+<tr><th>Business rules</th><td>Changes apply to new records only; records in progress keep the configuration copied onto them. List entries that are in use are deactivated, not deleted. Every separation reason belongs to exactly one category: voluntary, involuntary or other. The approval chain has zero to three ordered steps; each step names a role, a user or "line manager".</td></tr>
+<tr><th>Input fields</th><td>Name, time zone, reporting year start month, default notice period in days, employment types and whether each counts in headcount, separation reasons, approval chain, clearance template, exit interview template, analytics start date, small-group threshold.</td></tr>
+<tr><th>Validation rules</th><td>Time zone is a valid IANA name. Notice period is 0 to 365 days. Small-group threshold is 1 to 50. Templates have at least one active item to be enabled.</td></tr>
+<tr><th>Expected outputs</th><td>Saved settings, audit entries for each change.</td></tr>
+<tr><th>Related API</th><td><code>GET|PATCH /organization</code>, <code>GET|PUT /settings/{section}</code></td></tr>
+</tbody></table></div>
+
+<h3 id="metrics">8.13 Metric definitions</h3>
+<p>These definitions are implemented once, in the Go API, and used by the dashboard, the analytics screens and every report.</p>
+
+<h4>Shared terms</h4>
+<ul>
+  <li><b>Headcount on a date</b> is the number of employee records whose join date is on or before that date and whose end date is empty or on or after that date. An employee counts as employed on their last working day.</li>
+  <li><b>Average headcount for a period</b> is the mean of the daily headcount over every calendar day in the period. Because headcount is derived from dates, this needs no stored snapshots. It is less sensitive to hiring or leaving at the start or end of a month than the common shortcut of averaging the opening and closing figures.</li>
+  <li><b>Separations in a period</b> are completed separations whose last working day falls inside the period. Internal transfers are not separations.</li>
+  <li><b>Counted employment types.</b> Each organization chooses which employment types count, for example whether interns or short-term contractors are included. The same choice applies to numerator and denominator.</li>
+</ul>
+
+<h4>Formulas</h4>
+<div class="tw wide"><table>
+<thead><tr><th>Metric</th><th>Formula</th><th>Assumptions and notes</th></tr></thead>
+<tbody>
+<tr><th>Monthly turnover rate</th><td>Separations in the month ÷ average headcount in the month × 100</td><td>Calendar month in the organization's time zone. Example: 6 separations and an average headcount of 120 gives 5.0%.</td></tr>
+<tr><th>Annual turnover rate</th><td>Separations in the 12 months ÷ average headcount over the same 12 months × 100</td><td>Shown as a rolling 12 months or by reporting year. It is calculated directly, not by adding or averaging monthly rates. A part-year figure is labelled "year to date" and is not scaled up to a full year.</td></tr>
+<tr><th>Department turnover rate</th><td>Separations from the department in the period ÷ average headcount of the department in the period × 100</td><td>Uses dated department history, so an employee counts in the department they belonged to on each day. Transfers in and out are reported beside the rate but are not turnover.</td></tr>
+<tr><th>Voluntary turnover rate</th><td>Voluntary separations in the period ÷ average headcount × 100</td><td>Category comes from the organization's reason list, for example resignation.</td></tr>
+<tr><th>Involuntary turnover rate</th><td>Involuntary separations in the period ÷ average headcount × 100</td><td>For example termination or redundancy. Reasons classed as "other", such as retirement or end of a fixed-term contract, are reported separately. Voluntary + involuntary + other = total.</td></tr>
+<tr><th>Retention rate</th><td>Employees on the first day of the period who are still employed on the last day ÷ employees on the first day × 100</td><td>People hired during the period are excluded from both figures. It is not calculated as 100 minus turnover; the two can differ when new hires leave within the period.</td></tr>
+<tr><th>Average tenure</th><td>Current staff: mean of (as-of date − join date). Leavers: mean of (last working day − join date).</td><td>Shown in years to one decimal place, with the median beside the mean because a few long-serving employees can pull the mean up. Each employment period of a rehired person is measured separately.</td></tr>
+<tr><th>Resignation trend</th><td>Count of resignations per month, by submission date; and separately by last working day</td><td>Submission date shows when people decided to leave; last working day shows when headcount changes. Withdrawn and rejected requests are shown as their own series and not counted as separations.</td></tr>
+<tr><th>Headcount trend</th><td>Month-end headcount, joiners, leavers, net change = joiners − leavers</td><td>Closing headcount = opening headcount + joiners − leavers. The API checks this identity in tests.</td></tr>
+</tbody></table></div>
+
+<h4>Handling missing history and avoiding misleading figures</h4>
+<ul>
+  <li><b>Analytics start date.</b> Each organization records the earliest date from which its data is complete, meaning that everyone employed on or after that date has a record, including people who have since left. No rate is calculated for a period that begins before this date. The screen shows "Not enough data" with the reason.</li>
+  <li><b>Why former employees matter.</b> If only current staff are imported, past headcount is understated and past separations are missing, so historical turnover would be wrong in both directions. The import screen explains this and asks whether leavers are included before the analytics start date is set.</li>
+  <li><b>Completeness checks.</b> A data quality panel lists records that affect metrics: missing join date, end date before join date, separated status without an end date, no department on some days. Affected periods carry a warning.</li>
+  <li><b>No division by zero.</b> If average headcount is zero the rate is shown as "n/a", never as 0%.</li>
+  <li><b>Small groups.</b> When average headcount is below the organization's threshold (default 5), the rate is flagged and the counts are shown first. One leaver from a team of three is 33%, which is arithmetically correct and easy to misread.</li>
+  <li><b>Partial periods.</b> The current, unfinished month is labelled "month to date" and excluded from trend lines by default.</li>
+  <li><b>Future-dated exits.</b> Approved separations with a future last working day appear under "upcoming departures" and do not count in turnover until the date passes.</li>
+  <li><b>Counts with every rate.</b> Every percentage is displayed with its numerator and denominator, and exports include both.</li>
+  <li><b>Corrections change history.</b> Because metrics are derived, correcting a past date changes past figures. Each report shows when it was generated, and date corrections are audited. Frozen monthly snapshots are a possible later feature.</li>
+</ul>
+
+<!-- ============ 9 ============ -->
+<h2 id="s9"><span class="n">9</span>Non-Functional Requirements</h2>
+<p>Numeric targets below are proposed design targets. They will be confirmed or revised in Phase 1 and verified in Phase 7.</p>
+<div class="tw wide"><table>
+<thead><tr><th>Area</th><th>Requirement</th></tr></thead>
+<tbody>
+<tr><th>Security</th><td>HTTPS only. Passwords hashed with Argon2id. Short-lived JWT access tokens and rotating refresh tokens in HttpOnly, Secure, SameSite cookies. Permission check on every endpoint in the API. Server-side input validation on every request. Rate limiting on authentication endpoints. Secrets supplied through environment variables, never committed. Dependency vulnerability scanning in the build. The OWASP ASVS Level 1 checklist is used as the review guide.</td></tr>
+<tr><th>Performance</th><td>Target: list and detail endpoints respond within 500 ms at the 95th percentile, and analytics endpoints within 2 seconds, for an organization of 5,000 employee records on modest hosting. Lists are paginated. Analytics use indexed aggregation queries.</td></tr>
+<tr><th>Scalability</th><td>The API is stateless and can run as more than one instance behind a proxy. All indexes lead with the organization ID. The initial design target is tens of organizations and up to about 10,000 employee records each; larger scale would need load testing and is not claimed.</td></tr>
+<tr><th>Maintainability</th><td>Layered Go code (handler, service, repository) with business rules in services. TypeScript in strict mode. Linting and formatting enforced in continuous integration. OpenAPI description kept with the code. Database changes made through versioned migration scripts.</td></tr>
+<tr><th>Reliability</th><td>Events to n8n are stored in an outbox and retried, so a temporary n8n outage delays notifications without losing them. Multi-document changes use MongoDB transactions. Health and readiness endpoints for monitoring. Automation handlers are idempotent.</td></tr>
+<tr><th>Data privacy</th><td>Only data needed for the stated functions is collected. Exit interview responses are restricted to HR and aggregated only above a minimum response count. Personal data is kept out of application logs and limited in n8n payloads. Each organization sets its own retention period; anonymization of old leaver records is supported by design and delivered after the MVP. The organization remains responsible for compliance with the privacy law that applies to it.</td></tr>
+<tr><th>Auditability</th><td>Append-only audit log of sign-ins, data changes, approvals, overrides, permission changes and exports, recording user, time, action, record and changed fields. Sensitive values such as passwords are never logged.</td></tr>
+<tr><th>Responsive UI</th><td>Usable from 360 px wide phones to desktop. Tables collapse to cards or scroll within their container. Keyboard navigation and visible focus on all controls. Colour contrast meets WCAG 2.1 AA. Charts have a table alternative.</td></tr>
+<tr><th>Backup and recovery</th><td>Automated daily database backup, kept for 30 days, stored away from the database host. Proposed targets: lose at most 24 hours of data, and restore within 4 hours. A restore is rehearsed before go-live and documented. n8n workflows are exported to version control.</td></tr>
+</tbody></table></div>
+
+<!-- ============ 10 ============ -->
+<h2 id="s10"><span class="n">10</span>Technology Stack</h2>
+<div class="tw wide"><table>
+<thead><tr><th>Layer</th><th>Technology</th><th>Use in PeoplePulse</th></tr></thead>
+<tbody>
+<tr><th>Frontend</th><td>Next.js (App Router), TypeScript</td><td>Pages, routing, forms, session-aware layouts.</td></tr>
+<tr><th>Styling</th><td>Tailwind CSS</td><td>Responsive layout and a small shared component set.</td></tr>
+<tr><th>Charts</th><td>Recharts</td><td>Line, bar and stacked charts for dashboard and analytics.</td></tr>
+<tr><th>Backend</th><td>Go, REST over JSON</td><td>Business rules, authorization, metrics, validation. The chi router and the standard <code>net/http</code> package are proposed; structured logging with <code>log/slog</code>.</td></tr>
+<tr><th>Database</th><td>MongoDB with the official MongoDB Go Driver</td><td>Document storage, schema validators, aggregation pipelines for analytics. Run as a replica set so that transactions are available.</td></tr>
+<tr><th>Automation</th><td>n8n (self-hosted)</td><td>Webhook-triggered and scheduled notification workflows, email delivery.</td></tr>
+<tr><th>Authentication</th><td>JWT, Argon2id</td><td>Access and refresh tokens, password hashing.</td></tr>
+<tr><th>Authorization</th><td>Role-Based Access Control</td><td>Permission checks in API middleware and services.</td></tr>
+<tr><th>Supporting tools</th><td>Docker Compose, Git, a CI pipeline, a reverse proxy with TLS, an SMTP service</td><td>Local and production environments, builds, HTTPS, outbound email. The hosting provider and email provider are open decisions.</td></tr>
+</tbody></table></div>
+
+<!-- ============ 11 ============ -->
+<h2 id="s11"><span class="n">11</span>System Architecture</h2>
+<h3>11.1 High-level architecture</h3>
+<pre class="mermaid">
+flowchart LR
+    U["Users in a web browser"] -->|HTTPS| P["Reverse proxy with TLS"]
+    P --> W["Next.js web app"]
+    P -->|"/api/v1"| A["Go REST API"]
+    W -->|"REST and JSON"| A
+    A -->|"MongoDB Go Driver"| D[("MongoDB replica set")]
+    A -->|"Signed webhook events"| N["n8n"]
+    N -->|"REST with service key"| A
+    N -->|SMTP| E["Email service"]
+</pre>
+<p class="cap">Figure 2. Components and the direction of calls. n8n has no connection to MongoDB.</p>
+<p>The browser reaches the web application and the API through one reverse proxy on one domain, which keeps cookies first-party. n8n sits on the private network and is never called by the browser.</p>
+
+<h3>11.2 Frontend and backend communication</h3>
+<ul>
+  <li>The frontend calls the API with JSON over HTTPS. A typed API client is generated from, or checked against, the OpenAPI description.</li>
+  <li>The frontend hides controls the user has no permission for, as a convenience. The API enforces permissions regardless of what the frontend shows.</li>
+  <li>Client-side validation gives quick feedback. Server-side validation is the authority.</li>
+  <li>Lists use <code>page</code>, <code>pageSize</code>, <code>sort</code> and filter query parameters and return <code>{ data, page, pageSize, total }</code>.</li>
+</ul>
+
+<h3>11.3 REST API structure</h3>
+<div class="tw wide"><table>
+<thead><tr><th>Resource group</th><th>Base path</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td>Authentication</td><td><code>/auth</code>, <code>/me</code></td><td>Sign-in, token refresh, password flows, current user.</td></tr>
+<tr><td>Organization</td><td><code>/organization</code>, <code>/settings</code></td><td>Profile and configuration.</td></tr>
+<tr><td>Access</td><td><code>/users</code>, <code>/roles</code>, <code>/permissions</code></td><td>Users and RBAC.</td></tr>
+<tr><td>Workforce</td><td><code>/employees</code>, <code>/departments</code></td><td>Core records.</td></tr>
+<tr><td>Exits</td><td><code>/separations</code>, <code>/exit-interviews</code>, <code>/clearances</code></td><td>Separation workflow.</td></tr>
+<tr><td>Insight</td><td><code>/dashboard</code>, <code>/analytics</code>, <code>/reports</code></td><td>Metrics and exports.</td></tr>
+<tr><td>Oversight</td><td><code>/notifications</code>, <code>/audit-logs</code></td><td>Alerts and audit.</td></tr>
+<tr><td>Integration</td><td><code>/integrations</code></td><td>Endpoints for n8n only, authenticated with a service key.</td></tr>
+<tr><td>Operations</td><td><code>/healthz</code>, <code>/readyz</code></td><td>Monitoring, no authentication.</td></tr>
+</tbody></table></div>
+<p>State changes that are not simple edits are modelled as action endpoints, for example <code>POST /separations/{id}/approve</code>, so each business action has one place for its rules and its audit entry.</p>
+
+<h3>11.4 MongoDB data flow</h3>
+<ol>
+  <li>A handler parses the request and passes a typed command to a service.</li>
+  <li>The service checks permission and business rules, then calls repositories.</li>
+  <li>Every repository method takes the organization ID from the authenticated context and includes it in the query filter. The ID is never read from the request body or URL.</li>
+  <li>When an action changes several documents, for example final approval, the service runs them in one transaction: update the separation, update the employee, create the clearance, write the audit entry and write the outbox event.</li>
+  <li>Analytics endpoints run aggregation pipelines over employees and separations and return computed figures with their counts.</li>
+</ol>
+
+<h3>11.5 n8n integration architecture</h3>
+<pre class="mermaid">
+sequenceDiagram
+    participant API as Go API
+    participant DB as MongoDB
+    participant N as n8n
+    participant M as Email service
+    API->>DB: Save business change and outbox event in one transaction
+    API->>N: POST webhook with event, timestamp and HMAC signature
+    N->>N: Verify signature and timestamp
+    N-->>API: 200 accepted
+    API->>DB: Mark outbox event delivered
+    N->>M: Send email
+    N->>API: POST delivery status with service key
+    Note over N,API: Scheduled workflows start in n8n and ask the API what is due
+    N->>API: GET due reminders with service key
+    API-->>N: Items already selected by business rules
+    N->>M: Send reminder emails
+</pre>
+<p class="cap">Figure 3. Event-driven and scheduled communication between the API and n8n.</p>
+<p>Section 13 describes the security controls and each workflow.</p>
+
+<h3>11.6 Authentication and authorization flow</h3>
+<pre class="mermaid">
+sequenceDiagram
+    participant B as Browser
+    participant API as Go API
+    participant DB as MongoDB
+    B->>API: POST /auth/login with email and password
+    API->>DB: Load user, verify Argon2id hash
+    API->>DB: Store hashed refresh token as a session
+    API-->>B: Access JWT of 15 minutes and refresh token in HttpOnly cookie
+    B->>API: Request with access token
+    API->>API: Verify JWT, read user, organization and role
+    API->>DB: Load role permissions, cached briefly
+    API->>API: Check permission and record scope
+    API-->>B: Response or 403
+    B->>API: POST /auth/refresh when access token expires
+    API->>DB: Validate and rotate refresh token
+    API-->>B: New access token and refresh cookie
+</pre>
+<p class="cap">Figure 4. Sign-in, authorized request and token refresh.</p>
+<ul>
+  <li>The JWT carries user ID, organization ID and role ID. Permissions are loaded on the server, so a role change takes effect without waiting for long-lived tokens to expire.</li>
+  <li>Refresh tokens are single-use. Presenting a used token ends the whole session, which limits the damage of a stolen token.</li>
+  <li>Sign-out, deactivation and password change delete the user's sessions.</li>
+  <li>Authorization has two parts: the permission, such as <code>separation.approve</code>, and the scope, such as "own department" or "assigned to me".</li>
+  <li>A record that belongs to another organization returns 404, the same as a record that does not exist.</li>
+</ul>
+
+<h3>11.7 Error handling and logging</h3>
+<p>All errors use one JSON shape:</p>
+<pre class="code">{
+  "error": {
+    "code": "VALIDATION_FAILED",
+    "message": "Last working day cannot be before the submission date.",
+    "fields": { "lastWorkingDay": "must be on or after submissionDate" },
+    "requestId": "req_8f2c1e"
+  }
+}</pre>
+<div class="tw"><table>
+<thead><tr><th>HTTP status</th><th>Used for</th></tr></thead>
+<tbody>
+<tr><td class="num">400 / 422</td><td>Malformed request / failed validation, with field details.</td></tr>
+<tr><td class="num">401 / 403</td><td>Not signed in or token expired / signed in without permission.</td></tr>
+<tr><td class="num">404</td><td>Not found, including records in another organization.</td></tr>
+<tr><td class="num">409</td><td>Conflict with current state, for example an invalid status transition or a concurrent edit.</td></tr>
+<tr><td class="num">429</td><td>Rate limit reached.</td></tr>
+<tr><td class="num">500</td><td>Unexpected error. The response has a generic message and a request ID; details stay in the server log.</td></tr>
+</tbody></table></div>
+<ul>
+  <li><b>Application logs</b> are structured JSON with request ID, user ID, organization ID, route, status and duration. They contain no passwords, tokens or exit interview text.</li>
+  <li><b>Audit logs</b> are business records stored in MongoDB and are separate from application logs.</li>
+  <li><b>Frontend</b> shows field errors next to inputs, a clear message for failed actions, and an error boundary with the request ID for unexpected failures.</li>
+  <li><b>n8n</b> has an error workflow that reports failed executions to the API, where they appear to the Organization Admin.</li>
+</ul>
+
+<!-- ============ 12 ============ -->
+<h2 id="s12"><span class="n">12</span>Database Design Overview</h2>
+<h3>12.1 Collections</h3>
+<p>Every collection except <code>organizations</code> has an <code>organizationId</code> field. All have <code>createdAt</code> and <code>updatedAt</code>; editable documents also have a <code>version</code> number for concurrency control.</p>
+<div class="tw wide"><table>
+<thead><tr><th>Collection</th><th>Purpose</th><th>Main fields</th></tr></thead>
+<tbody>
+<tr><th>organizations</th><td>One document per tenant, with embedded settings.</td><td>name, timeZone, reportingYearStartMonth, analyticsStartDate, settings { noticePeriodDays, employmentTypes[], separationReasons[], approvalChain[], clearanceTemplate[], exitInterviewTemplate, notification, smallGroupThreshold }</td></tr>
+<tr><th>users</th><td>Sign-in accounts.</td><td>email, passwordHash, fullName, roleId, employeeId (optional), status, lastLoginAt</td></tr>
+<tr><th>roles</th><td>Named permission sets.</td><td>name, description, permissions[], isSystemDefault</td></tr>
+<tr><th>sessions</th><td>Refresh tokens.</td><td>userId, tokenHash, expiresAt, userAgent</td></tr>
+<tr><th>employees</th><td>One document per employment period.</td><td>employeeNumber, fullName, workEmail, phone, departmentId, departmentHistory[ { departmentId, from, to } ], jobTitle, employmentType, managerId, joinDate, endDate, status, rehireOf</td></tr>
+<tr><th>departments</th><td>Organization structure.</td><td>name, code, parentId, headEmployeeId, status</td></tr>
+<tr><th>resignations</th><td>Separation records of every type, including resignations. See the note below.</td><td>employeeId, type, reasonCode, category, reasonDetails, submittedBy, submittedAt, requestedLastWorkingDay, lastWorkingDay, status, approvalSteps[ { order, approverType, approverId, decision, decidedBy, decidedAt, comment } ], statusHistory[], departmentIdAtExit, tenureDaysAtExit</td></tr>
+<tr><th>exit_interviews</th><td>Feedback for one separation.</td><td>separationId, employeeId, interviewerId, scheduledAt, status, questions[], answers[], notes, submittedAt</td></tr>
+<tr><th>exit_clearances</th><td>Checklist for one separation.</td><td>separationId, employeeId, status, items[ { itemId, category, title, assigneeType, assigneeId, status, remarks, dueDate, updatedBy, updatedAt } ], override { by, at, reason }</td></tr>
+<tr><th>notifications</th><td>In-app notifications and email delivery status.</td><td>userId, type, title, body, link, readAt, emailStatus</td></tr>
+<tr><th>audit_logs</th><td>Append-only activity record.</td><td>actorId, actorType, action, entityType, entityId, changes[ { field, from, to } ], ip, at</td></tr>
+<tr><th>outbox_events</th><td>Events waiting to be sent to n8n.</td><td>eventId, type, payload, status, attempts, nextAttemptAt, deliveredAt</td></tr>
+</tbody></table></div>
+<div class="note"><b>Naming note.</b> The brief lists a <code>resignations</code> collection. Because involuntary turnover must be measured, the collection has to hold every separation type, with resignation as one value of <code>type</code>. The name <code>separations</code> would describe it better and is recommended; the choice is to be confirmed in Phase 1. Three collections, <code>roles</code>, <code>sessions</code> and <code>outbox_events</code>, are added to the brief's list because RBAC, token refresh and reliable event delivery need them.</div>
+
+<h3>12.2 Relationships</h3>
+<pre class="mermaid">
+erDiagram
+    ORGANIZATIONS ||--o{ USERS : has
+    ORGANIZATIONS ||--o{ ROLES : defines
+    ORGANIZATIONS ||--o{ DEPARTMENTS : has
+    ORGANIZATIONS ||--o{ EMPLOYEES : employs
+    ROLES ||--o{ USERS : "assigned to"
+    DEPARTMENTS ||--o{ EMPLOYEES : contains
+    EMPLOYEES |o--o| USERS : "may sign in as"
+    EMPLOYEES ||--o{ RESIGNATIONS : "separates through"
+    RESIGNATIONS ||--o| EXIT_INTERVIEWS : "may have"
+    RESIGNATIONS ||--o| EXIT_CLEARANCES : generates
+    USERS ||--o{ NOTIFICATIONS : receives
+    USERS ||--o{ AUDIT_LOGS : "acts in"
+</pre>
+<p class="cap">Figure 5. References between collections.</p>
+
+<h3>12.3 Embedding and referencing</h3>
+<ul>
+  <li><b>Referenced by ID:</b> entities with their own life cycle and independent queries, such as employees, departments, separations and users.</li>
+  <li><b>Embedded:</b> small, bounded data that is always read with its parent, such as approval steps, clearance items, department history and organization settings.</li>
+  <li><b>Copied at the time of the event:</b> the approval chain, clearance template and interview questions are copied onto each record when it is created. The department and tenure at exit are stored on the separation. This keeps historical records and reports stable when settings or departments change later.</li>
+</ul>
+
+<h3>12.4 Indexes</h3>
+<div class="tw wide"><table>
+<thead><tr><th>Collection</th><th>Index</th><th>Reason</th></tr></thead>
+<tbody>
+<tr><td>users</td><td><code>{ email: 1 }</code> unique</td><td>Sign-in by email. Email is unique across the system in the MVP.</td></tr>
+<tr><td>roles</td><td><code>{ organizationId: 1, name: 1 }</code> unique</td><td>Role names per organization.</td></tr>
+<tr><td>sessions</td><td><code>{ tokenHash: 1 }</code> unique; TTL on <code>expiresAt</code></td><td>Token lookup and automatic expiry.</td></tr>
+<tr><td>employees</td><td><code>{ organizationId: 1, employeeNumber: 1 }</code> unique</td><td>Uniqueness rule.</td></tr>
+<tr><td>employees</td><td><code>{ organizationId: 1, status: 1, departmentId: 1 }</code></td><td>Lists and filters.</td></tr>
+<tr><td>employees</td><td><code>{ organizationId: 1, joinDate: 1, endDate: 1 }</code></td><td>Headcount on a date.</td></tr>
+<tr><td>departments</td><td><code>{ organizationId: 1, code: 1 }</code> unique</td><td>Uniqueness rule.</td></tr>
+<tr><td>resignations</td><td><code>{ organizationId: 1, status: 1, lastWorkingDay: 1 }</code></td><td>Work queues, reminders, turnover counts.</td></tr>
+<tr><td>resignations</td><td><code>{ organizationId: 1, employeeId: 1 }</code> unique, partial on open statuses</td><td>One open separation per employee, enforced by the database.</td></tr>
+<tr><td>exit_interviews, exit_clearances</td><td><code>{ organizationId: 1, separationId: 1 }</code> unique</td><td>One per separation.</td></tr>
+<tr><td>exit_clearances</td><td><code>{ organizationId: 1, "items.assigneeId": 1, "items.status": 1 }</code></td><td>"My clearance tasks".</td></tr>
+<tr><td>notifications</td><td><code>{ organizationId: 1, userId: 1, readAt: 1, createdAt: -1 }</code></td><td>Unread list.</td></tr>
+<tr><td>audit_logs</td><td><code>{ organizationId: 1, at: -1 }</code>; <code>{ organizationId: 1, entityType: 1, entityId: 1 }</code></td><td>Audit search and record history.</td></tr>
+<tr><td>outbox_events</td><td><code>{ status: 1, nextAttemptAt: 1 }</code>; <code>{ eventId: 1 }</code> unique</td><td>Dispatcher polling and de-duplication.</td></tr>
+</tbody></table></div>
+
+<h3>12.5 Validation and consistency</h3>
+<ul>
+  <li><b>Two layers of validation.</b> Go structs are validated in the API before any write. MongoDB <code>$jsonSchema</code> validators on each collection enforce required fields, types and allowed status values as a second line of defence.</li>
+  <li><b>Transactions.</b> Actions that change several documents run in a multi-document transaction. This requires MongoDB to run as a replica set, including in development.</li>
+  <li><b>Concurrent edits.</b> Updates include the expected <code>version</code>. If another user changed the record first, the API returns 409 and the user reloads.</li>
+  <li><b>Referential checks.</b> MongoDB has no foreign keys, so the service layer verifies that referenced IDs exist in the same organization before writing.</li>
+  <li><b>No hard deletes</b> for employees, departments, separations or audit entries. Records are archived or deactivated.</li>
+  <li><b>Dates.</b> Timestamps are stored in UTC. Business dates such as join date and last working day are stored as calendar dates and interpreted in the organization's time zone.</li>
+</ul>
+
+<h3>12.6 Multi-organization isolation</h3>
+<ul>
+  <li>One shared database with <code>organizationId</code> on every document is used. It is the simplest model to operate and adequate for the stated scale.</li>
+  <li>The organization ID comes only from the verified token. Repository methods cannot be called without it.</li>
+  <li>Every index starts with <code>organizationId</code>, so queries for one organization do not scan another's data.</li>
+  <li>Automated tests create two organizations and assert that every endpoint refuses access across them.</li>
+  <li>Integration endpoints used by n8n return data grouped by organization, and each event names its organization.</li>
+</ul>
+
+<!-- ============ 13 ============ -->
+<h2 id="s13"><span class="n">13</span>Automation Workflows</h2>
+<h3>13.1 Division of responsibility</h3>
+<div class="tw"><table>
+<thead><tr><th>Go API decides</th><th>n8n does</th></tr></thead>
+<tbody>
+<tr><td>Whether an action is allowed and what state results.</td><td>Receives the resulting event.</td></tr>
+<tr><td>Who must be notified.</td><td>Formats and sends the email.</td></tr>
+<tr><td>Which reminders are due, from organization settings.</td><td>Runs the schedule and asks the API.</td></tr>
+<tr><td>What the monthly report contains.</td><td>Requests the report data and emails it.</td></tr>
+<tr><td>Creation of clearance checklists and all other data changes.</td><td>Reports delivery status back.</td></tr>
+</tbody></table></div>
+<p>If n8n is unavailable, every business function still works and in-app notifications still appear. Only emails are delayed until the outbox is delivered.</p>
+
+<h3>13.2 Secure communication</h3>
+<h4>API to n8n (webhooks)</h4>
+<ul>
+  <li>The API posts each event to an n8n Webhook node over HTTPS on the private network.</li>
+  <li>Each request carries a timestamp, a unique event ID and an HMAC-SHA256 signature of the timestamp and body, made with a shared secret. The workflow's first step recomputes the signature and rejects mismatches and requests older than five minutes.</li>
+  <li>Workflows ignore an event ID they have already processed, because the outbox may deliver an event more than once.</li>
+  <li>Payloads carry what is needed to write the message: record IDs, recipient addresses, names, dates and a link. They do not carry exit interview content or reason details.</li>
+</ul>
+<h4>n8n to API (REST)</h4>
+<ul>
+  <li>n8n calls only <code>/api/v1/integrations/*</code> endpoints, using a service API key stored in n8n credentials and stored hashed in the API.</li>
+  <li>The key has its own narrow permissions: read due items, read report data, write delivery status. It cannot approve, edit or read anything else.</li>
+  <li>Calls by the service key are written to the audit log with actor type "integration".</li>
+  <li>The key and the webhook secret can be rotated without code changes.</li>
+</ul>
+<h4>n8n itself</h4>
+<ul>
+  <li>The n8n editor is protected by its own login and is not exposed to the public internet where the hosting allows.</li>
+  <li>Stored execution data is pruned on a short schedule, because it contains names and email addresses.</li>
+  <li>Workflow definitions are exported to the repository so they can be reviewed and restored.</li>
+</ul>
+
+<h3>13.3 Workflows</h3>
+<div class="tw wide"><table>
+<thead><tr><th>#</th><th>Workflow</th><th>Trigger</th><th>What the API provides</th><th>What n8n does</th></tr></thead>
+<tbody>
+<tr><td>1</td><th>New resignation submitted</th><td>Event <code>separation.submitted</code></td><td>First approver and HR recipients, employee name, department, requested last working day, link.</td><td>Emails the approver and HR. Reports delivery status.</td></tr>
+<tr><td>2</td><th>Resignation decision</th><td>Events <code>separation.step_approved</code>, <code>separation.approved</code>, <code>separation.rejected</code></td><td>Next approver or, on a final decision, the employee and HR; decision and confirmed last working day.</td><td>Emails the next approver, or the outcome to the employee and HR.</td></tr>
+<tr><td>3</td><th>Clearance tasks created</th><td>Event <code>clearance.created</code></td><td>The checklist the API has already created on final approval, grouped by assignee, with due dates.</td><td>Emails each assignee their items. n8n does not create the tasks, so a checklist exists even if n8n is down.</td></tr>
+<tr><td>4</td><th>Pending clearance reminders</th><td>Daily schedule</td><td><code>GET /integrations/reminders/clearance</code> returns open items that are due soon or overdue, selected using each organization's reminder settings.</td><td>Sends one digest per assignee, and an overdue summary to HR. Confirms what was sent so the API does not repeat it the same day.</td></tr>
+<tr><td>5</td><th>Upcoming last working day</th><td>Daily schedule</td><td><code>GET /integrations/reminders/last-working-day</code> returns separations whose last working day is within the configured lead time, with clearance progress.</td><td>Emails HR, the line manager and assignees with open items.</td></tr>
+<tr><td>6</td><th>Monthly HR analytics report</th><td>Schedule, first day of each month</td><td><code>GET /integrations/reports/monthly</code> returns each organization's computed summary for the previous month: headcount, joiners, leavers, turnover rates with counts, open clearances, data warnings.</td><td>Renders the summary as an HTML email and sends it to the configured recipients. Performs no calculation.</td></tr>
+</tbody></table></div>
+<p>Account emails, meaning invitations and password resets, use the same event route. As a fallback, an Organization Admin can copy an invitation link from the user screen.</p>
+
+<!-- ============ 14 ============ -->
+<h2 id="s14"><span class="n">14</span>Implementation Methodology</h2>
+<p>The project follows an iterative, phase-based approach suited to one engineer.</p>
+<ul>
+  <li><b>Phased delivery.</b> Seven phases, each ending with working, demonstrable software or reviewed documents.</li>
+  <li><b>Short iterations.</b> Work is planned in one-to-two-week iterations from a prioritized backlog, with a review with the project supervisor or stakeholder at the end of each.</li>
+  <li><b>Vertical slices.</b> Each feature is built through database, API and interface together, so integration problems appear early.</li>
+  <li><b>API contract first.</b> Endpoints are described in OpenAPI before the screens that use them are built.</li>
+  <li><b>Version control and CI.</b> Git with short-lived branches. Every change runs linting, tests and a build.</li>
+  <li><b>Definition of done.</b> Code reviewed by the author against a checklist, automated tests passing, permission and tenant-isolation tests included, audit entry written where relevant, documentation updated.</li>
+</ul>
+<h3>Testing approach</h3>
+<div class="tw"><table>
+<thead><tr><th>Level</th><th>Focus</th></tr></thead>
+<tbody>
+<tr><th>Unit tests (Go)</th><td>Metric calculations with hand-checked data sets, status transitions, validation, permission checks.</td></tr>
+<tr><th>Integration tests (Go and MongoDB)</th><td>Repositories, transactions, indexes and cross-organization access refusal, run against a real MongoDB instance.</td></tr>
+<tr><th>Component and end-to-end tests</th><td>Key journeys in a browser: add employee, submit and approve resignation, complete clearance, view analytics.</td></tr>
+<tr><th>Workflow tests</th><td>Each n8n workflow in a staging environment, including signature rejection, duplicate events and n8n downtime.</td></tr>
+<tr><th>Security review</th><td>Checklist-based review, dependency scan, authentication and authorization test cases.</td></tr>
+<tr><th>User acceptance</th><td>Walk-through with at least one HR practitioner using sample data, if one is available.</td></tr>
+</tbody></table></div>
+
+<!-- ============ 15 ============ -->
+<h2 id="s15"><span class="n">15</span>Development Timeline and Estimates</h2>
+<p>Effort is given in development days for one engineer, where one day is about seven to eight focused working hours. Ranges reflect uncertainty. These are planning estimates and not fixed delivery commitments; calendar dates depend on availability and on the dependencies listed below.</p>
+<div class="tw wide"><table>
+<thead><tr><th>Phase</th><th>Main activities</th><th>Outputs</th><th class="num">Effort (days)</th></tr></thead>
+<tbody>
+<tr><th>1. Requirements Analysis and UI/UX Design</th><td>Validate assumptions with HR practitioners, finalize requirements, resolve open questions in Appendix A, wireframes, style guide, OpenAPI outline.</td><td>Requirements specification, wireframes, confirmed MVP scope.</td><td class="num">10 to 14</td></tr>
+<tr><th>2. Project Setup and Authentication</th><td>Repositories, Docker Compose, CI, Go project structure, MongoDB replica set, organization bootstrap, users, roles, JWT flow, audit log foundation, application shell.</td><td>Sign-in, user and role management, working pipeline.</td><td class="num">9 to 12</td></tr>
+<tr><th>3. Employee and Department Management</th><td>Departments, employees, transfers, timeline, CSV import, organization settings for types and lists.</td><td>Modules 2, 3 and part of 12.</td><td class="num">10 to 13</td></tr>
+<tr><th>4. Resignation and Exit Management</th><td>Separation workflow and approval chain, clearance templates and checklists, exit interview template and records, in-app notifications, outbox.</td><td>Modules 4, 5, 6 and part of 9.</td><td class="num">16 to 21</td></tr>
+<tr><th>5. HR Dashboard and Analytics</th><td>Metric engine with tests, analytics endpoints, dashboard, charts, data quality panel, reports and CSV export, audit log viewer.</td><td>Modules 1, 7, 8 and 10.</td><td class="num">11 to 15</td></tr>
+<tr><th>6. n8n Workflow Automation</th><td>n8n set-up, signature verification, integration endpoints, six workflows, email templates, error workflow.</td><td>Module 9 complete, exported workflows.</td><td class="num">7 to 10</td></tr>
+<tr><th>7. Testing, Security and Deployment</th><td>End-to-end tests, security review, performance check against targets, backup and restore rehearsal, production deployment, documentation, acceptance walk-through.</td><td>Test documentation, deployment instructions, released MVP.</td><td class="num">12 to 16</td></tr>
+</tbody>
+<tfoot><tr><th colspan="3">Total estimated effort, before contingency</th><td class="num">75 to 101</td></tr></tfoot>
+</table></div>
+<p>At five development days a week this is about 15 to 20 working weeks. A contingency of 15 to 20 percent is recommended on top, for rework after feedback and for unknowns.</p>
+
+<h3>Assumptions</h3>
+<ul>
+  <li>One engineer works on the project full time. Part-time work extends the calendar duration proportionally.</li>
+  <li>The MVP scope in section 7 is confirmed in Phase 1 and changes after that are handled as backlog items with their own estimates.</li>
+  <li>The engineer has working knowledge of the stack. Time to learn Go, MongoDB aggregation or n8n from the beginning is not included.</li>
+  <li>The interface uses a small custom component set with Tailwind CSS. A bespoke visual identity is not included.</li>
+  <li>English is the only interface language in the MVP.</li>
+  <li>Unit and integration tests are written within each phase; Phase 7 covers end-to-end, security and release work.</li>
+</ul>
+<h3>Dependencies</h3>
+<ul>
+  <li>Access to at least one HR practitioner for requirement validation and acceptance feedback.</li>
+  <li>A hosting environment that can run Docker containers, with a domain name and TLS certificate.</li>
+  <li>An SMTP or transactional email service for n8n.</li>
+  <li>Realistic sample data, anonymized or synthetic, for testing analytics.</li>
+  <li>Timely review feedback at the end of each phase.</li>
+</ul>
+
+<!-- ============ 16 ============ -->
+<h2 id="s16"><span class="n">16</span>Expected Outcomes</h2>
+<p>If the MVP is delivered as described, an organization that adopts it can expect the following. These are intended outcomes of using the system, not measured results.</p>
+<ul>
+  <li>One maintained record of employees, departments and employment history.</li>
+  <li>A visible status for every separation, with its approvals, last working day and clearance progress.</li>
+  <li>Turnover and retention figures calculated the same way every month, with the counts behind them.</li>
+  <li>Comparable figures across departments, with warnings where a group is too small to read much into.</li>
+  <li>Exit reasons and feedback recorded in a form that can be summarized.</li>
+  <li>Fewer manual reminders, because routine notifications are sent automatically.</li>
+  <li>An audit trail of who changed or approved what.</li>
+</ul>
+<div class="note"><b>Limits of these outcomes.</b> PeoplePulse reports on turnover; it does not reduce it. Any change in retention depends on the decisions and actions managers take with the information. Time saved and other benefits will vary by organization and have not been measured. If measurement is wanted, a baseline should be recorded before adoption and compared afterwards.</div>
+
+<!-- ============ 17 ============ -->
+<h2 id="s17"><span class="n">17</span>Risks and Mitigation</h2>
+<div class="tw wide"><table>
+<thead><tr><th>Risk</th><th>Likelihood</th><th>Impact</th><th>Mitigation</th></tr></thead>
+<tbody>
+<tr><td>Scope grows beyond what one engineer can deliver.</td><td>High</td><td>High</td><td>Fixed MVP table in section 7, backlog for everything else, scope review at each phase end.</td></tr>
+<tr><td>Requirements are based on unvalidated assumptions.</td><td>Medium</td><td>High</td><td>Phase 1 validation with HR practitioners; configurable policies instead of fixed ones.</td></tr>
+<tr><td>Incomplete or poor-quality imported data produces misleading metrics.</td><td>High</td><td>High</td><td>Analytics start date, import validation, data quality panel, warnings on affected periods.</td></tr>
+<tr><td>Metrics are misread, especially for small departments.</td><td>Medium</td><td>Medium</td><td>Counts shown with rates, small-group flag, definitions available from each chart.</td></tr>
+<tr><td>A defect exposes one organization's data to another.</td><td>Low</td><td>High</td><td>Organization scope enforced in the repository layer, automated cross-organization tests on every endpoint.</td></tr>
+<tr><td>Sensitive HR data is exposed through logs, n8n or weak access control.</td><td>Medium</td><td>High</td><td>Minimal payloads, pruned n8n executions, no personal data in logs, restricted exit interview access, security review.</td></tr>
+<tr><td>n8n is unavailable or a workflow fails.</td><td>Medium</td><td>Low</td><td>Outbox with retry, in-app notifications independent of n8n, error workflow, no business rules in n8n.</td></tr>
+<tr><td>Transactions unavailable because MongoDB is not a replica set.</td><td>Low</td><td>Medium</td><td>Replica set required in all environments and checked at API start-up.</td></tr>
+<tr><td>Single-developer dependency: illness or unavailability stops progress.</td><td>Medium</td><td>Medium</td><td>Documentation kept current, all work in version control, reproducible environment with Docker Compose.</td></tr>
+<tr><td>Estimates prove optimistic.</td><td>Medium</td><td>Medium</td><td>Ranges and contingency, progress tracked against estimates each iteration, lower-priority MVP items identified for deferral.</td></tr>
+<tr><td>Privacy or labour regulations differ between adopting organizations.</td><td>Medium</td><td>Medium</td><td>Configurable retention and notice settings; compliance responsibility stated as the organization's.</td></tr>
+</tbody></table></div>
+
+<!-- ============ 18 ============ -->
+<h2 id="s18"><span class="n">18</span>Future Enhancements</h2>
+<p>These items are outside the MVP and are not included in the estimates.</p>
+<ul>
+  <li>Self-service organization sign-up and subscription management.</li>
+  <li>Single sign-on and multi-factor authentication.</li>
+  <li>Conditional approval rules, approver delegation and escalation.</li>
+  <li>File attachments, such as resignation letters and clearance evidence.</li>
+  <li>PDF report exports and scheduled custom reports.</li>
+  <li>Hire-cohort retention curves and new-hire retention measures.</li>
+  <li>Frozen monthly metric snapshots for period-end reporting.</li>
+  <li>Automated anonymization of leaver records after the configured retention period.</li>
+  <li>Custom employee fields and breakdowns by those fields.</li>
+  <li>Integrations with HRIS, payroll or directory systems through the existing REST API.</li>
+  <li>Additional notification channels through n8n, such as team chat tools.</li>
+  <li>Additional interface languages.</li>
+  <li>Attrition risk indicators, only after careful assessment of data quality, fairness and privacy, and only as decision support.</li>
+</ul>
+
+<!-- ============ 19 ============ -->
+<h2 id="s19"><span class="n">19</span>Conclusion</h2>
+<p>PeoplePulse is a focused proposal: one system for employee records, separations, clearance, exit feedback and the turnover and retention figures that come from them. It is built on a consistent stack of Next.js, Go, MongoDB and n8n, with business rules held in one place and policies left to each organization's configuration.</p>
+<p>The scope has been cut to what one engineer can build in an estimated 75 to 101 development days, and the proposal is explicit about what is assumed, what is deferred and what the system does not claim to do. The recommended next step is to approve Phase 1, in which the assumptions in this document are tested with HR practitioners and the open questions in Appendix A are settled before development begins.</p>
+
+<!-- ============ A ============ -->
+<h2 id="sA"><span class="n">A</span>Requirements Analysis: Gaps and Resolutions</h2>
+<p>The project brief was reviewed before this proposal was written. The table lists the gaps and contradictions found and how the proposal resolves each one. Items marked "Confirm" need a decision in Phase 1.</p>
+<div class="tw wide"><table>
+<thead><tr><th>#</th><th>Gap or contradiction in the brief</th><th>Resolution in this proposal</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Involuntary turnover must be measured, but the modules only describe resignations, which are voluntary.</td><td>The resignation module handles all separation types. HR records non-resignation exits. Each reason has a category.</td><td>Adopted</td></tr>
+<tr><td>2</td><td>Multi-organization support is required, but so is avoiding enterprise complexity.</td><td>Organization ID on every document and query from the start; one organization created by an operator in the MVP; sign-up and billing deferred.</td><td>Adopted</td></tr>
+<tr><td>3</td><td>Roles and approval workflows must be configurable, which can become a large workflow engine.</td><td>Roles are editable permission sets from a fixed permission list. Approval is a sequential chain of up to three steps. Conditional logic deferred.</td><td>Adopted</td></tr>
+<tr><td>4</td><td>The brief does not say whether employees sign in.</td><td>Employee self-service is optional per organization. HR can always enter a resignation on an employee's behalf.</td><td>Confirm</td></tr>
+<tr><td>5</td><td>n8n is asked to create clearance tasks, but business logic must not live only in n8n.</td><td>The API creates the checklist in the approval transaction. n8n notifies assignees.</td><td>Adopted</td></tr>
+<tr><td>6</td><td>The turnover formula needs average headcount, but the brief does not define it or say how history is obtained.</td><td>Headcount is derived from join and end dates; average is the daily mean. An analytics start date marks where data is complete.</td><td>Adopted</td></tr>
+<tr><td>7</td><td>"Annual turnover" could mean calendar year, rolling 12 months or an annualized part-year.</td><td>Rolling 12 months and reporting year are both offered. Part-year figures are labelled and not annualized.</td><td>Adopted</td></tr>
+<tr><td>8</td><td>Retention rate is not defined and is often wrongly taken as 100 minus turnover.</td><td>Defined on the group employed at period start.</td><td>Adopted</td></tr>
+<tr><td>9</td><td>Which employment types count toward headcount is not stated.</td><td>Configurable per employment type.</td><td>Adopted</td></tr>
+<tr><td>10</td><td>Department-wise history needs to know which department an employee was in at each date.</td><td>Dated department history on the employee record.</td><td>Adopted</td></tr>
+<tr><td>11</td><td>Rehired employees are not addressed.</td><td>One record per employment period, linked to the earlier record.</td><td>Adopted</td></tr>
+<tr><td>12</td><td>JWT is specified without a refresh or revocation approach.</td><td>Short-lived access token, rotating refresh token stored server-side, sessions revocable.</td><td>Adopted</td></tr>
+<tr><td>13</td><td>Data consistency is required; MongoDB transactions need a replica set.</td><td>Replica set in every environment.</td><td>Adopted</td></tr>
+<tr><td>14</td><td>The notifications module and n8n overlap.</td><td>The API creates in-app notifications and decides recipients. n8n delivers email.</td><td>Adopted</td></tr>
+<tr><td>15</td><td>Exit feedback is sensitive, yet analytics are wanted.</td><td>Individual responses restricted to HR; aggregates need a minimum number of responses.</td><td>Adopted</td></tr>
+<tr><td>16</td><td>Notice periods and last-working-day rules vary by organization and jurisdiction.</td><td>Configurable default notice period with HR override and reason.</td><td>Adopted</td></tr>
+<tr><td>17</td><td>Initial data loading is not mentioned.</td><td>CSV import for employees, including former employees, in the MVP.</td><td>Adopted</td></tr>
+<tr><td>18</td><td>Report formats are not specified.</td><td>On-screen and CSV in the MVP; PDF later.</td><td>Confirm</td></tr>
+<tr><td>19</td><td>Hosting environment and email provider are not specified.</td><td>Docker Compose deployment assumed; provider choices left open.</td><td>Confirm</td></tr>
+<tr><td>20</td><td>Data retention and privacy obligations are not specified.</td><td>Retention is an organization setting; anonymization after the MVP; compliance stays with the organization.</td><td>Confirm</td></tr>
+<tr><td>21</td><td>The <code>resignations</code> collection name is narrower than its required content.</td><td>Renaming to <code>separations</code> recommended.</td><td>Confirm</td></tr>
+<tr><td>22</td><td>The stated problems are presented without evidence.</td><td>Treated as assumptions throughout; validation planned in Phase 1.</td><td>Adopted</td></tr>
+</tbody></table></div>
+
+</div>
