@@ -64,6 +64,9 @@ func (s *Server) Routes() http.Handler {
 		r.Group(func(r chi.Router) {
 			r.Use(s.authenticate)
 			r.Get("/me", s.handleMe)
+			r.Get("/notifications", s.handleListNotifications)
+			r.Post("/notifications/read-all", s.handleReadAllNotifications)
+			r.Post("/notifications/{id}/read", s.handleReadNotification)
 
 			r.With(s.require(domain.PermUserRead)).Get("/users", s.handleListUsers)
 			r.With(s.require(domain.PermUserManage)).Post("/users", s.handleInviteUser)

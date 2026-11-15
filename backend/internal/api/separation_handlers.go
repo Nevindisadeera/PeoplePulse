@@ -300,7 +300,7 @@ func (s *Server) handleCreateSeparation(w http.ResponseWriter, r *http.Request) 
 
 	var onApproved func(ctx context.Context) error
 	if sep.Status == domain.SeparationApproved {
-		if onApproved, err = s.approvedSideEffects(r.Context(), org, emp, sep, now); err != nil {
+		if onApproved, err = s.approvedSideEffects(r.Context(), p.User.ID, org, emp, sep, now); err != nil {
 			httpx.Fail(w, r, err)
 			return
 		}
@@ -310,9 +310,11 @@ func (s *Server) handleCreateSeparation(w http.ResponseWriter, r *http.Request) 
 			return err
 		}
 		if onApproved != nil {
-			return onApproved(ctx)
+			if err := onApproved(ctx); err != nil {
+				return err
+			}
 		}
-		return nil
+		return s.notifySeparationStarted(ctx, p.User.ID, sep)
 	})
 	if err != nil {
 		if errors.Is(err, store.ErrDuplicate) {
@@ -452,7 +454,7 @@ func (s *Server) decide(w http.ResponseWriter, r *http.Request, approve bool) {
 			httpx.Fail(w, r, err)
 			return
 		}
-		if onApproved, err = s.approvedSideEffects(r.Context(), org, emp, sep, now); err != nil {
+		if onApproved, err = s.approvedSideEffects(r.Context(), p.User.ID, org, emp, sep, now); err != nil {
 			httpx.Fail(w, r, err)
 			return
 		}
@@ -462,9 +464,11 @@ func (s *Server) decide(w http.ResponseWriter, r *http.Request, approve bool) {
 			return err
 		}
 		if onApproved != nil {
-			return onApproved(ctx)
+			if err := onApproved(ctx); err != nil {
+				return err
+			}
 		}
-		return nil
+		return s.notifyDecision(ctx, p.User.ID, sep)
 	})
 	if err != nil {
 		httpx.Fail(w, r, storeErr(err, "Separation"))
@@ -513,6 +517,12 @@ func (s *Server) handleWithdrawSeparation(w http.ResponseWriter, r *http.Request
 		httpx.Fail(w, r, httpx.Forbidden())
 		return
 	}
+	// Whoever had been asked to approve is told that the request is gone.
+	wasAwaiting, err := s.pendingApprovers(r.Context(), sep)
+	if err != nil {
+		httpx.Fail(w, r, err)
+		return
+	}
 	if err := sep.Withdraw(p.User.ID, in.Note, time.Now().UTC()); err != nil {
 		httpx.Fail(w, r, transitionErr(err))
 		return
@@ -525,9 +535,11 @@ func (s *Server) handleWithdrawSeparation(w http.ResponseWriter, r *http.Request
 			if err := s.store.CancelClearance(ctx, sep.OrganizationID, sep.ID); err != nil {
 				return err
 			}
-			return s.store.PatchEmployee(ctx, sep.OrganizationID, sep.EmployeeID, bson.M{"status": domain.EmployeeActive})
+			if err := s.store.PatchEmployee(ctx, sep.OrganizationID, sep.EmployeeID, bson.M{"status": domain.EmployeeActive}); err != nil {
+				return err
+			}
 		}
-		return nil
+		return s.notifyWithdrawn(ctx, p.User.ID, sep, wasAwaiting)
 	})
 	if err != nil {
 		httpx.Fail(w, r, storeErr(err, "Separation"))
@@ -582,7 +594,10 @@ func (s *Server) handleSetLastWorkingDay(w http.ResponseWriter, r *http.Request)
 			return err
 		}
 		// Open clearance items that were due on the old last working day move with it.
-		return s.store.ShiftClearanceDueDates(ctx, sep.OrganizationID, sep.ID, old, day)
+		if err := s.store.ShiftClearanceDueDates(ctx, sep.OrganizationID, sep.ID, old, day); err != nil {
+			return err
+		}
+		return s.notifyLastWorkingDayChanged(ctx, p.User.ID, sep, old)
 	})
 	if err != nil {
 		httpx.Fail(w, r, storeErr(err, "Separation"))

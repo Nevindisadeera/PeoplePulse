@@ -63,6 +63,8 @@ All paths are under `/api/v1`.
 | GET, POST | `/roles` | List roles, create a role |
 | PATCH | `/roles/{id}` | Edit a role |
 | GET | `/permissions` | Permission catalogue |
+| GET | `/notifications` | My notifications with unread count (`?unread=true` for unread only) |
+| POST | `/notifications/{id}/read`, `/notifications/read-all` | Mark notifications as read |
 | GET, PATCH | `/organization` | Organization profile and settings |
 | PUT | `/settings/employment-types` | Replace the employment type list |
 | GET, POST | `/departments` | List departments with headcount, create a department |
@@ -97,6 +99,22 @@ All paths are under `/api/v1`.
 
 Edits to departments, employees, separations and clearances send the record's current `version`; a stale version returns `409`.
 
+### Notifications and the n8n webhook
+
+The API decides who is notified and stores an in-app notification for each person. For email, it also stores an event in an outbox, in the same transaction as the change, and a background dispatcher posts it to the webhook in `N8N_WEBHOOK_URL`. Failed deliveries are retried with backoff (30 seconds doubling up to 1 hour, 10 attempts). Without a webhook URL, in-app notifications still work and events are not delivered.
+
+Each webhook request is JSON with `eventId`, `type`, `organizationId`, `occurredAt` and `data` (title, body, link, recipients and a few record fields; never the separation reason). It carries three headers:
+
+| Header | Content |
+| --- | --- |
+| `X-PeoplePulse-Event-Id` | Unique event ID. Delivery is at-least-once, so receivers should ignore an ID they have already processed |
+| `X-PeoplePulse-Timestamp` | Unix time in seconds when the request was sent |
+| `X-PeoplePulse-Signature` | Hex HMAC-SHA256 of `<timestamp>.<raw body>` using `N8N_WEBHOOK_SECRET` |
+
+The receiver should recompute the signature and reject mismatches and timestamps older than five minutes.
+
+Event types: `separation.approval_requested`, `separation.submitted`, `separation.approved`, `separation.rejected`, `separation.withdrawn`, `separation.last_working_day_changed`, `clearance.assigned`.
+
 ### CSV import format
 
 Header row required. Columns: `employeeNumber`, `fullName`, `departmentCode`, `employmentType`, `joinDate` (YYYY-MM-DD) are required; `workEmail`, `phone`, `jobTitle`, `managerEmployeeNumber` are optional. Nothing is saved unless every row is valid.
@@ -113,7 +131,7 @@ go test ./...
 1. Requirements analysis and UI/UX design
 2. Project setup and authentication (done)
 3. Employee and department management (backend done)
-4. Resignation and exit management (separation workflow, exit clearance and exit interviews done; notifications next)
+4. Resignation and exit management (backend done)
 5. HR dashboard and analytics
 6. n8n workflow automation
 7. Testing, security and deployment

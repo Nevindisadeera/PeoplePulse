@@ -14,6 +14,7 @@ import (
 
 	"peoplepulse/internal/api"
 	"peoplepulse/internal/config"
+	"peoplepulse/internal/outbox"
 	"peoplepulse/internal/store"
 )
 
@@ -54,6 +55,11 @@ func run() error {
 	go func() { errc <- srv.ListenAndServe() }()
 	if !st.Transactions {
 		slog.Warn("MongoDB is not a replica set, so multi-document changes are not transactional; use a replica set outside local development")
+	}
+	if cfg.WebhookURL != "" {
+		go outbox.New(st, cfg.WebhookURL, cfg.WebhookSecret).Run(ctx)
+	} else {
+		slog.Info("N8N_WEBHOOK_URL is not set: events are recorded but not delivered")
 	}
 	slog.Info("api listening", "port", cfg.Port, "database", cfg.MongoDB)
 

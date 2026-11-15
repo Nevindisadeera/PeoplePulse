@@ -107,6 +107,15 @@ func (s *Store) EnsureIndexes(ctx context.Context) error {
 			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "separationId", Value: 1}}, Options: unique()},
 			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "status", Value: 1}, {Key: "submittedAt", Value: 1}}},
 		},
+		"notifications": {
+			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "userId", Value: 1}, {Key: "readAt", Value: 1}, {Key: "createdAt", Value: -1}}},
+			// Notifications are removed after 180 days.
+			{Keys: bson.D{{Key: "createdAt", Value: 1}}, Options: options.Index().SetExpireAfterSeconds(180 * 24 * 3600)},
+		},
+		"outbox_events": {
+			{Keys: bson.D{{Key: "status", Value: 1}, {Key: "nextAttemptAt", Value: 1}}},
+			{Keys: bson.D{{Key: "eventId", Value: 1}}, Options: unique()},
+		},
 		"audit_logs": {
 			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "at", Value: -1}}},
 			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "entityType", Value: 1}, {Key: "entityId", Value: 1}}},
