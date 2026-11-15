@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"slices"
 	"strings"
@@ -111,7 +112,7 @@ func (s *Server) buildClearance(ctx context.Context, org *domain.Organization, e
 // approvedSideEffects returns what must be saved together with a separation
 // that has just become approved: the employee starts serving notice and the
 // clearance checklist is generated.
-func (s *Server) approvedSideEffects(ctx context.Context, org *domain.Organization, emp *domain.Employee, sep *domain.Separation, now time.Time) (func(ctx context.Context) error, error) {
+func (s *Server) approvedSideEffects(ctx context.Context, actor bson.ObjectID, org *domain.Organization, emp *domain.Employee, sep *domain.Separation, now time.Time) (func(ctx context.Context) error, error) {
 	clearance, err := s.buildClearance(ctx, org, emp, sep, now)
 	if err != nil {
 		return nil, err
@@ -120,7 +121,10 @@ func (s *Server) approvedSideEffects(ctx context.Context, org *domain.Organizati
 		if err := s.store.InsertClearance(ctx, clearance); err != nil {
 			return err
 		}
-		return s.store.PatchEmployee(ctx, org.ID, emp.ID, bson.M{"status": domain.EmployeeServingNotice})
+		if err := s.store.PatchEmployee(ctx, org.ID, emp.ID, bson.M{"status": domain.EmployeeServingNotice}); err != nil {
+			return err
+		}
+		return s.notifyClearanceAssigned(ctx, actor, clearance, emp, clearance.Items)
 	}, nil
 }
 
@@ -412,6 +416,9 @@ func (s *Server) handleAddClearanceItem(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	s.audit(r, orgID, &p.User.ID, "clearance.item_added", "clearance", c.ID.Hex(), map[string]any{"itemId": item.ItemID, "title": item.Title})
+	if err := s.notifyClearanceAssigned(r.Context(), p.User.ID, c, emp, []domain.ClearanceItem{item}); err != nil {
+		slog.Error("notification failed", "event", domain.EventClearanceAssigned, "err", err)
+	}
 	c.Version++
 	s.writeClearance(w, r, 201, c)
 }
