@@ -52,6 +52,9 @@ func run() error {
 	}
 	errc := make(chan error, 1)
 	go func() { errc <- srv.ListenAndServe() }()
+	if !st.Transactions {
+		slog.Warn("MongoDB is not a replica set, so multi-document changes are not transactional; use a replica set outside local development")
+	}
 	slog.Info("api listening", "port", cfg.Port, "database", cfg.MongoDB)
 
 	select {

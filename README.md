@@ -24,7 +24,7 @@ PeoplePulse-Proposal.html   Same proposal as a web page
 
 ## Running the backend
 
-Requirements: Go 1.25+ and a running MongoDB instance.
+Requirements: Go 1.25+ and a running MongoDB instance. A replica set is recommended: on a standalone MongoDB the API still works, but changes that touch several records are not transactional.
 
 ```bash
 cd backend
@@ -73,8 +73,16 @@ All paths are under `/api/v1`.
 | POST | `/employees/{id}/transfers` | Move an employee to another department from a date |
 | GET | `/employees/{id}/timeline` | Joining, transfer and separation events |
 | POST | `/employees/import` | Import employees from CSV (`?dryRun=true` to validate only) |
+| PUT | `/settings/separation-reasons` | Replace the separation reason list (each reason is voluntary, involuntary or other) |
+| PUT | `/settings/approval-chain` | Set the resignation approval chain (0 to 3 steps: line manager, role or user) |
+| GET, POST | `/separations` | List separations (`?awaitingMe=true` for my approvals), submit a resignation or record another separation |
+| GET | `/separations/{id}` | View a separation with its approval steps and history |
+| POST | `/separations/{id}/approve`, `/reject` | Decide the pending approval step |
+| POST | `/separations/{id}/withdraw` | Withdraw a pending request, or cancel an approved one (HR) |
+| PATCH | `/separations/{id}/last-working-day` | Change the last working day, with a reason |
+| POST | `/separations/{id}/complete` | Close the employment period on or after the last working day |
 
-Edits to departments and employees send the record's current `version`; a stale version returns `409`.
+Edits to departments, employees and separations send the record's current `version`; a stale version returns `409`.
 
 ### CSV import format
 
@@ -92,7 +100,7 @@ go test ./...
 1. Requirements analysis and UI/UX design
 2. Project setup and authentication (done)
 3. Employee and department management (backend done)
-4. Resignation and exit management
+4. Resignation and exit management (separation workflow done; clearance, exit interviews and notifications next)
 5. HR dashboard and analytics
 6. n8n workflow automation
 7. Testing, security and deployment

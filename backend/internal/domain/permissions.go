@@ -96,8 +96,8 @@ func DefaultRoles() []Role {
 		{Name: RoleOrgAdmin, Description: "Organization settings, users, roles and audit log.", Permissions: all, IsSystemDefault: true, Locked: true},
 		{Name: "HR Manager", Description: "All HR data, final approvals, overrides and analytics.", Permissions: hrManager, IsSystemDefault: true},
 		{Name: "HR Officer", Description: "Day-to-day employee records, separations and clearance follow-up.", Permissions: hrOfficer, IsSystemDefault: true},
-		{Name: "Department Manager", Description: "Own department, approvals for direct reports, handover items.", Permissions: []string{PermEmployeeReadDept, PermDepartmentRead, PermSeparationRead, PermSeparationApprove, PermClearanceUpdateOwn, PermAnalyticsRead}, IsSystemDefault: true},
-		{Name: "Clearance Officer", Description: "Clearance items assigned to them.", Permissions: []string{PermClearanceUpdateOwn}, IsSystemDefault: true},
+		{Name: "Department Manager", Description: "Own department, approvals for direct reports, handover items.", Permissions: []string{PermEmployeeReadDept, PermDepartmentRead, PermSeparationSubmit, PermSeparationApprove, PermClearanceUpdateOwn, PermAnalyticsRead}, IsSystemDefault: true},
+		{Name: "Clearance Officer", Description: "Clearance items assigned to them.", Permissions: []string{PermSeparationSubmit, PermClearanceUpdateOwn}, IsSystemDefault: true},
 		{Name: "Employee", Description: "Own resignation and exit interview form.", Permissions: []string{PermSeparationSubmit}, IsSystemDefault: true},
 	}
 }

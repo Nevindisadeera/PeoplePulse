@@ -74,7 +74,7 @@ func run() error {
 
 	now := time.Now().UTC()
 	org := &domain.Organization{ID: bson.NewObjectID(), Name: *orgName, TimeZone: *tz, CreatedAt: now, UpdatedAt: now,
-		Settings: domain.OrgSettings{EmploymentTypes: domain.DefaultEmploymentTypes()}}
+		Settings: domain.OrgSettings{EmploymentTypes: domain.DefaultEmploymentTypes(), SeparationReasons: domain.DefaultSeparationReasons()}}
 	if err := create(ctx, st, org, addr, *name, hash, now); err != nil {
 		// No transaction is used here, so remove anything partially created.
 		for _, c := range []string{"users", "roles"} {
@@ -99,6 +99,13 @@ func create(ctx context.Context, st *store.Store, org *domain.Organization, emai
 		}
 		if r.Locked {
 			adminRole = r.ID
+		}
+		if r.Name == "HR Manager" {
+			// Default resignation approval chain: line manager, then HR Manager.
+			chain := []domain.ChainStep{{ApproverType: domain.ApproverLineManager}, {ApproverType: domain.ApproverRole, RoleID: &r.ID}}
+			if err := st.UpdateOrganization(ctx, org.ID, bson.M{"settings.approvalChain": chain}); err != nil {
+				return err
+			}
 		}
 	}
 	return st.InsertUser(ctx, &domain.User{
