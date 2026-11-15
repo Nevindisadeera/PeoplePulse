@@ -83,6 +83,8 @@ func (s *Server) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		FullName *string `json:"fullName" validate:"omitempty,min=2,max=120"`
 		RoleID   *string `json:"roleId"`
 		Status   *string `json:"status" validate:"omitempty,oneof=active inactive"`
+		// EmployeeID links the account to an employee record; "" removes the link.
+		EmployeeID *string `json:"employeeId"`
 	}
 	if err := httpx.Decode(w, r, &in); err != nil {
 		httpx.Fail(w, r, err)
@@ -123,7 +125,24 @@ func (s *Server) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		changes["status"] = map[string]string{"from": target.Status, "to": *in.Status}
 		deactivating = *in.Status == domain.UserStatusInactive
 	}
-	if len(set) == 0 {
+	unset := []string{}
+	if in.EmployeeID != nil {
+		if *in.EmployeeID == "" {
+			unset = append(unset, "employeeId")
+		} else {
+			empID, err := bson.ObjectIDFromHex(*in.EmployeeID)
+			if err == nil {
+				_, err = s.store.EmployeeByID(r.Context(), orgID, empID)
+			}
+			if err != nil {
+				httpx.Fail(w, r, httpx.Invalid(map[string]string{"employeeId": "is not an employee in this organization"}))
+				return
+			}
+			set["employeeId"] = empID
+		}
+		changes["employeeId"] = *in.EmployeeID
+	}
+	if len(changes) == 0 {
 		httpx.JSON(w, 200, target)
 		return
 	}
@@ -152,7 +171,7 @@ func (s *Server) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if err := s.store.UpdateUser(r.Context(), orgID, id, set); err != nil {
+	if err := s.store.UpdateUser(r.Context(), orgID, id, set, unset...); err != nil {
 		httpx.Fail(w, r, notFoundOr(err, "User"))
 		return
 	}

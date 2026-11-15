@@ -73,6 +73,26 @@ func (s *Server) Routes() http.Handler {
 			r.With(s.require(domain.PermRoleRead)).Get("/permissions", s.handleListPermissions)
 			r.With(s.require(domain.PermRoleManage)).Post("/roles", s.handleCreateRole)
 			r.With(s.require(domain.PermRoleManage)).Patch("/roles/{id}", s.handleUpdateRole)
+
+			r.Get("/organization", s.handleGetOrganization)
+			r.With(s.require(domain.PermOrgSettingsManage)).Patch("/organization", s.handleUpdateOrganization)
+			r.With(s.require(domain.PermOrgSettingsManage)).Put("/settings/employment-types", s.handlePutEmploymentTypes)
+
+			r.With(s.require(domain.PermDepartmentRead)).Get("/departments", s.handleListDepartments)
+			r.With(s.require(domain.PermDepartmentRead)).Get("/departments/{id}", s.handleGetDepartment)
+			r.With(s.require(domain.PermDepartmentManage)).Post("/departments", s.handleCreateDepartment)
+			r.With(s.require(domain.PermDepartmentManage)).Patch("/departments/{id}", s.handleUpdateDepartment)
+			r.With(s.require(domain.PermDepartmentManage)).Post("/departments/{id}/archive", s.handleArchiveDepartment)
+			r.With(s.require(domain.PermDepartmentManage)).Post("/departments/{id}/restore", s.handleRestoreDepartment)
+
+			readEmployees := s.require(domain.PermEmployeeRead, domain.PermEmployeeReadDept)
+			r.With(readEmployees).Get("/employees", s.handleListEmployees)
+			r.With(readEmployees).Get("/employees/{id}", s.handleGetEmployee)
+			r.With(readEmployees).Get("/employees/{id}/timeline", s.handleEmployeeTimeline)
+			r.With(s.require(domain.PermEmployeeManage)).Post("/employees", s.handleCreateEmployee)
+			r.With(s.require(domain.PermEmployeeManage)).Post("/employees/import", s.handleImportEmployees)
+			r.With(s.require(domain.PermEmployeeManage)).Patch("/employees/{id}", s.handleUpdateEmployee)
+			r.With(s.require(domain.PermEmployeeManage)).Post("/employees/{id}/transfers", s.handleTransferEmployee)
 		})
 	})
 
@@ -135,14 +155,19 @@ func (s *Server) authenticate(next http.Handler) http.Handler {
 	})
 }
 
-func (s *Server) require(perm string) func(http.Handler) http.Handler {
+// require lets the request through when the caller holds any of the permissions.
+func (s *Server) require(perms ...string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if p := principal(r); p == nil || !p.Can(perm) {
-				httpx.Fail(w, r, httpx.Forbidden())
-				return
+			if p := principal(r); p != nil {
+				for _, perm := range perms {
+					if p.Can(perm) {
+						next.ServeHTTP(w, r)
+						return
+					}
+				}
 			}
-			next.ServeHTTP(w, r)
+			httpx.Fail(w, r, httpx.Forbidden())
 		})
 	}
 }

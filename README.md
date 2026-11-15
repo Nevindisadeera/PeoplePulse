@@ -2,7 +2,7 @@
 
 Employee Turnover & Retention Management Platform. A reusable, organization-independent web application for managing employee records, resignations, exit clearance and exit feedback, with turnover and retention analytics.
 
-**Status:** in development. The backend foundation (authentication, users, roles) is in place; the remaining modules are being built in phases.
+**Status:** in development. The backend covers authentication, users, roles, departments and employees; the remaining modules are being built in phases.
 
 ## Tech stack
 
@@ -63,6 +63,22 @@ All paths are under `/api/v1`.
 | GET, POST | `/roles` | List roles, create a role |
 | PATCH | `/roles/{id}` | Edit a role |
 | GET | `/permissions` | Permission catalogue |
+| GET, PATCH | `/organization` | Organization profile and settings |
+| PUT | `/settings/employment-types` | Replace the employment type list |
+| GET, POST | `/departments` | List departments with headcount, create a department |
+| GET, PATCH | `/departments/{id}` | View or edit a department |
+| POST | `/departments/{id}/archive`, `/restore` | Archive or restore a department |
+| GET, POST | `/employees` | List and search employees, create an employee |
+| GET, PATCH | `/employees/{id}` | View or edit an employee |
+| POST | `/employees/{id}/transfers` | Move an employee to another department from a date |
+| GET | `/employees/{id}/timeline` | Joining, transfer and separation events |
+| POST | `/employees/import` | Import employees from CSV (`?dryRun=true` to validate only) |
+
+Edits to departments and employees send the record's current `version`; a stale version returns `409`.
+
+### CSV import format
+
+Header row required. Columns: `employeeNumber`, `fullName`, `departmentCode`, `employmentType`, `joinDate` (YYYY-MM-DD) are required; `workEmail`, `phone`, `jobTitle`, `managerEmployeeNumber` are optional. Nothing is saved unless every row is valid.
 
 ## Tests
 
@@ -75,7 +91,7 @@ go test ./...
 
 1. Requirements analysis and UI/UX design
 2. Project setup and authentication (done)
-3. Employee and department management
+3. Employee and department management (backend done)
 4. Resignation and exit management
 5. HR dashboard and analytics
 6. n8n workflow automation

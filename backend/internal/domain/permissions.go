@@ -15,6 +15,7 @@ const (
 	PermRoleRead            = "role.read"
 	PermRoleManage          = "role.manage"
 	PermEmployeeRead        = "employee.read"
+	PermEmployeeReadDept    = "employee.read_department"
 	PermEmployeeManage      = "employee.manage"
 	PermDepartmentRead      = "department.read"
 	PermDepartmentManage    = "department.manage"
@@ -40,7 +41,8 @@ var Catalogue = []Permission{
 	{PermUserManage, "Access", "Invite, edit and deactivate users"},
 	{PermRoleRead, "Access", "View roles and permissions"},
 	{PermRoleManage, "Access", "Create and edit roles"},
-	{PermEmployeeRead, "Workforce", "View employee records"},
+	{PermEmployeeRead, "Workforce", "View all employee records"},
+	{PermEmployeeReadDept, "Workforce", "View employees in departments I head"},
 	{PermEmployeeManage, "Workforce", "Create, edit, import and transfer employees"},
 	{PermDepartmentRead, "Workforce", "View departments"},
 	{PermDepartmentManage, "Workforce", "Create, edit and archive departments"},
@@ -73,9 +75,11 @@ const RoleOrgAdmin = "Organization Admin"
 
 // DefaultRoles returns the roles seeded for every new organization.
 func DefaultRoles() []Role {
-	all := make([]string, len(Catalogue))
-	for i, p := range Catalogue {
-		all[i] = p.Key
+	all := []string{}
+	for _, p := range Catalogue {
+		if p.Key != PermEmployeeReadDept { // redundant next to employee.read
+			all = append(all, p.Key)
+		}
 	}
 	hrManager := []string{
 		PermUserRead, PermRoleRead, PermEmployeeRead, PermEmployeeManage, PermDepartmentRead, PermDepartmentManage,
@@ -92,7 +96,7 @@ func DefaultRoles() []Role {
 		{Name: RoleOrgAdmin, Description: "Organization settings, users, roles and audit log.", Permissions: all, IsSystemDefault: true, Locked: true},
 		{Name: "HR Manager", Description: "All HR data, final approvals, overrides and analytics.", Permissions: hrManager, IsSystemDefault: true},
 		{Name: "HR Officer", Description: "Day-to-day employee records, separations and clearance follow-up.", Permissions: hrOfficer, IsSystemDefault: true},
-		{Name: "Department Manager", Description: "Own department, approvals for direct reports, handover items.", Permissions: []string{PermEmployeeRead, PermDepartmentRead, PermSeparationRead, PermSeparationApprove, PermClearanceUpdateOwn, PermAnalyticsRead}, IsSystemDefault: true},
+		{Name: "Department Manager", Description: "Own department, approvals for direct reports, handover items.", Permissions: []string{PermEmployeeReadDept, PermDepartmentRead, PermSeparationRead, PermSeparationApprove, PermClearanceUpdateOwn, PermAnalyticsRead}, IsSystemDefault: true},
 		{Name: "Clearance Officer", Description: "Clearance items assigned to them.", Permissions: []string{PermClearanceUpdateOwn}, IsSystemDefault: true},
 		{Name: "Employee", Description: "Own resignation and exit interview form.", Permissions: []string{PermSeparationSubmit}, IsSystemDefault: true},
 	}

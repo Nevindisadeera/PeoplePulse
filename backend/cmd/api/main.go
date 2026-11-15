@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	_ "time/tzdata" // time zone data for machines without a system database
 
 	"peoplepulse/internal/api"
 	"peoplepulse/internal/config"

@@ -13,6 +13,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	_ "time/tzdata" // time zone data for machines without a system database
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 
@@ -72,7 +73,8 @@ func run() error {
 	}
 
 	now := time.Now().UTC()
-	org := &domain.Organization{ID: bson.NewObjectID(), Name: *orgName, TimeZone: *tz, CreatedAt: now, UpdatedAt: now}
+	org := &domain.Organization{ID: bson.NewObjectID(), Name: *orgName, TimeZone: *tz, CreatedAt: now, UpdatedAt: now,
+		Settings: domain.OrgSettings{EmploymentTypes: domain.DefaultEmploymentTypes()}}
 	if err := create(ctx, st, org, addr, *name, hash, now); err != nil {
 		// No transaction is used here, so remove anything partially created.
 		for _, c := range []string{"users", "roles"} {

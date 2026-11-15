@@ -1,0 +1,125 @@
+package domain
+
+import (
+	"errors"
+	"time"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+)
+
+const (
+	DepartmentActive   = "active"
+	DepartmentArchived = "archived"
+
+	EmployeeActive        = "active"
+	EmployeeServingNotice = "serving_notice"
+	EmployeeSeparated     = "separated"
+)
+
+// EmploymentType is an organization-defined category such as permanent or
+// intern. CountsInHeadcount decides whether it is included in metrics.
+type EmploymentType struct {
+	Code              string `bson:"code" json:"code"`
+	Name              string `bson:"name" json:"name"`
+	CountsInHeadcount bool   `bson:"countsInHeadcount" json:"countsInHeadcount"`
+	Active            bool   `bson:"active" json:"active"`
+}
+
+type OrgSettings struct {
+	EmploymentTypes []EmploymentType `bson:"employmentTypes" json:"employmentTypes"`
+}
+
+func DefaultEmploymentTypes() []EmploymentType {
+	return []EmploymentType{
+		{Code: "permanent", Name: "Permanent", CountsInHeadcount: true, Active: true},
+		{Code: "probation", Name: "Probation", CountsInHeadcount: true, Active: true},
+		{Code: "contract", Name: "Fixed-term contract", CountsInHeadcount: true, Active: true},
+		{Code: "intern", Name: "Intern", CountsInHeadcount: false, Active: true},
+	}
+}
+
+// EmploymentTypes returns the configured types, or the defaults when none are set.
+func (o *Organization) EmploymentTypes() []EmploymentType {
+	if len(o.Settings.EmploymentTypes) == 0 {
+		return DefaultEmploymentTypes()
+	}
+	return o.Settings.EmploymentTypes
+}
+
+// Location returns the organization's time zone, falling back to UTC.
+func (o *Organization) Location() *time.Location {
+	if loc, err := time.LoadLocation(o.TimeZone); err == nil {
+		return loc
+	}
+	return time.UTC
+}
+
+type Department struct {
+	ID             bson.ObjectID  `bson:"_id" json:"id"`
+	OrganizationID bson.ObjectID  `bson:"organizationId" json:"-"`
+	Name           string         `bson:"name" json:"name"`
+	Code           string         `bson:"code" json:"code"`
+	ParentID       *bson.ObjectID `bson:"parentId,omitempty" json:"parentId,omitempty"`
+	HeadEmployeeID *bson.ObjectID `bson:"headEmployeeId,omitempty" json:"headEmployeeId,omitempty"`
+	Status         string         `bson:"status" json:"status"`
+	Version        int            `bson:"version" json:"version"`
+	CreatedAt      time.Time      `bson:"createdAt" json:"createdAt"`
+	UpdatedAt      time.Time      `bson:"updatedAt" json:"updatedAt"`
+}
+
+// DepartmentAssignment is one dated period in a department. To is the last day
+// in the department and is nil for the current assignment.
+type DepartmentAssignment struct {
+	DepartmentID bson.ObjectID `bson:"departmentId" json:"departmentId"`
+	From         Date          `bson:"from" json:"from"`
+	To           *Date         `bson:"to,omitempty" json:"to,omitempty"`
+}
+
+// Employee is one employment period. A rehired person gets a new record that
+// points at the earlier one through RehireOf.
+type Employee struct {
+	ID                bson.ObjectID          `bson:"_id" json:"id"`
+	OrganizationID    bson.ObjectID          `bson:"organizationId" json:"-"`
+	EmployeeNumber    string                 `bson:"employeeNumber" json:"employeeNumber"`
+	FullName          string                 `bson:"fullName" json:"fullName"`
+	WorkEmail         string                 `bson:"workEmail,omitempty" json:"workEmail,omitempty"`
+	Phone             string                 `bson:"phone,omitempty" json:"phone,omitempty"`
+	DepartmentID      bson.ObjectID          `bson:"departmentId" json:"departmentId"`
+	DepartmentHistory []DepartmentAssignment `bson:"departmentHistory" json:"departmentHistory"`
+	JobTitle          string                 `bson:"jobTitle,omitempty" json:"jobTitle,omitempty"`
+	EmploymentType    string                 `bson:"employmentType" json:"employmentType"`
+	ManagerID         *bson.ObjectID         `bson:"managerId,omitempty" json:"managerId,omitempty"`
+	JoinDate          Date                   `bson:"joinDate" json:"joinDate"`
+	EndDate           *Date                  `bson:"endDate,omitempty" json:"endDate,omitempty"`
+	Status            string                 `bson:"status" json:"status"`
+	RehireOf          *bson.ObjectID         `bson:"rehireOf,omitempty" json:"rehireOf,omitempty"`
+	ImportBatchID     *bson.ObjectID         `bson:"importBatchId,omitempty" json:"-"`
+	Version           int                    `bson:"version" json:"version"`
+	CreatedAt         time.Time              `bson:"createdAt" json:"createdAt"`
+	UpdatedAt         time.Time              `bson:"updatedAt" json:"updatedAt"`
+}
+
+var (
+	ErrSameDepartment   = errors.New("employee is already in this department")
+	ErrTransferTooEarly = errors.New("effective date must be after the start of the current department assignment")
+)
+
+// ApplyTransfer closes the current assignment the day before the effective
+// date and opens a new one. History is never overwritten.
+func ApplyTransfer(history []DepartmentAssignment, to bson.ObjectID, effective Date) ([]DepartmentAssignment, error) {
+	if len(history) == 0 {
+		return []DepartmentAssignment{{DepartmentID: to, From: effective}}, nil
+	}
+	out := make([]DepartmentAssignment, len(history), len(history)+1)
+	copy(out, history)
+	last := &out[len(out)-1]
+	if last.DepartmentID == to {
+		return nil, ErrSameDepartment
+	}
+	if !effective.After(last.From) {
+		return nil, ErrTransferTooEarly
+	}
+	end := effective.AddDays(-1)
+	last.To = &end
+	return append(out, DepartmentAssignment{DepartmentID: to, From: effective}), nil
+}

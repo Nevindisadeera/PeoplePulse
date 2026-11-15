@@ -53,21 +53,31 @@ func (s *Store) WithTx(ctx context.Context, fn func(ctx context.Context) error) 
 }
 
 func (s *Store) EnsureIndexes(ctx context.Context) error {
-	unique := options.Index().SetUnique(true)
+	// A fresh builder per index: the driver must not see one options value shared between models.
+	unique := func() *options.IndexOptionsBuilder { return options.Index().SetUnique(true) }
 	specs := map[string][]mongo.IndexModel{
 		"users": {
-			{Keys: bson.D{{Key: "email", Value: 1}}, Options: unique},
+			{Keys: bson.D{{Key: "email", Value: 1}}, Options: unique()},
 			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "roleId", Value: 1}, {Key: "status", Value: 1}}},
 			{Keys: bson.D{{Key: "inviteTokenHash", Value: 1}}, Options: options.Index().SetSparse(true)},
 		},
 		"roles": {
-			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "name", Value: 1}}, Options: unique},
+			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "name", Value: 1}}, Options: unique()},
 		},
 		"sessions": {
-			{Keys: bson.D{{Key: "tokenHash", Value: 1}}, Options: unique},
+			{Keys: bson.D{{Key: "tokenHash", Value: 1}}, Options: unique()},
 			{Keys: bson.D{{Key: "userId", Value: 1}}},
 			{Keys: bson.D{{Key: "familyId", Value: 1}}},
 			{Keys: bson.D{{Key: "expiresAt", Value: 1}}, Options: options.Index().SetExpireAfterSeconds(0)},
+		},
+		"departments": {
+			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "code", Value: 1}}, Options: unique()},
+			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "headEmployeeId", Value: 1}}},
+		},
+		"employees": {
+			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "employeeNumber", Value: 1}}, Options: unique()},
+			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "status", Value: 1}, {Key: "departmentId", Value: 1}}},
+			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "joinDate", Value: 1}, {Key: "endDate", Value: 1}}},
 		},
 		"audit_logs": {
 			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "at", Value: -1}}},

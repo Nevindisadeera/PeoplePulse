@@ -17,6 +17,7 @@ type Organization struct {
 	ID        bson.ObjectID `bson:"_id" json:"id"`
 	Name      string        `bson:"name" json:"name"`
 	TimeZone  string        `bson:"timeZone" json:"timeZone"`
+	Settings  OrgSettings   `bson:"settings" json:"-"`
 	CreatedAt time.Time     `bson:"createdAt" json:"createdAt"`
 	UpdatedAt time.Time     `bson:"updatedAt" json:"updatedAt"`
 }
