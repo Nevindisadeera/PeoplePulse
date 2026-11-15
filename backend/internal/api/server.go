@@ -117,6 +117,18 @@ func (s *Server) Routes() http.Handler {
 			r.With(s.require(domain.PermClearanceManage, domain.PermClearanceUpdateOwn)).Patch("/clearances/{id}/items/{itemId}", s.handleUpdateClearanceItem)
 			r.With(s.require(domain.PermClearanceManage)).Post("/clearances/{id}/items", s.handleAddClearanceItem)
 			r.With(s.require(domain.PermClearanceOverride)).Post("/clearances/{id}/override", s.handleOverrideClearance)
+
+			// Exit interviews: HR, plus the departing employee when self-service is on (checked in the handlers).
+			interviewHR := s.require(domain.PermExitInterviewRead, domain.PermExitInterviewManage)
+			r.With(interviewHR).Get("/settings/exit-interview-template", s.handleGetInterviewTemplate)
+			r.With(s.require(domain.PermExitInterviewManage)).Put("/settings/exit-interview-template", s.handlePutInterviewTemplate)
+			r.With(s.require(domain.PermExitInterviewManage)).Post("/separations/{id}/exit-interview", s.handleCreateExitInterview)
+			r.Get("/separations/{id}/exit-interview", s.handleGetSeparationInterview)
+			r.With(interviewHR).Get("/exit-interviews", s.handleListExitInterviews)
+			r.Get("/exit-interviews/{id}", s.handleGetExitInterview)
+			r.Patch("/exit-interviews/{id}", s.handleUpdateExitInterview)
+			r.Post("/exit-interviews/{id}/submit", s.handleSubmitExitInterview)
+			r.With(s.require(domain.PermExitInterviewRead)).Get("/analytics/exit-feedback", s.handleExitFeedback)
 		})
 	})
 

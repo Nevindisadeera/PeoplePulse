@@ -31,6 +31,20 @@ type OrgSettings struct {
 	SeparationReasons []SeparationReason      `bson:"separationReasons,omitempty" json:"separationReasons"`
 	ApprovalChain     []ChainStep             `bson:"approvalChain,omitempty" json:"approvalChain"`
 	ClearanceTemplate []ClearanceTemplateItem `bson:"clearanceTemplate,omitempty" json:"clearanceTemplate"`
+	ExitInterview     *ExitInterviewTemplate  `bson:"exitInterview,omitempty" json:"exitInterview"`
+}
+
+// InterviewTemplate returns the exit interview settings; the feature is off
+// until an organization has configured it.
+func (o *Organization) InterviewTemplate() ExitInterviewTemplate {
+	if o.Settings.ExitInterview == nil {
+		return ExitInterviewTemplate{MinAggregateResponses: DefaultMinAggregateResponses, Questions: []InterviewQuestion{}}
+	}
+	t := *o.Settings.ExitInterview
+	if t.Questions == nil {
+		t.Questions = []InterviewQuestion{}
+	}
+	return t
 }
 
 const DefaultNoticePeriodDays = 30

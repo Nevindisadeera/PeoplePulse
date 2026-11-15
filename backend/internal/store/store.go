@@ -103,6 +103,10 @@ func (s *Store) EnsureIndexes(ctx context.Context) error {
 			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "items.userId", Value: 1}}},
 			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "items.roleId", Value: 1}}},
 		},
+		"exit_interviews": {
+			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "separationId", Value: 1}}, Options: unique()},
+			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "status", Value: 1}, {Key: "submittedAt", Value: 1}}},
+		},
 		"audit_logs": {
 			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "at", Value: -1}}},
 			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "entityType", Value: 1}, {Key: "entityId", Value: 1}}},

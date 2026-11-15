@@ -88,6 +88,12 @@ All paths are under `/api/v1`.
 | POST | `/clearances/{id}/items` | Add an extra item to one checklist |
 | POST | `/clearances/{id}/override` | Allow the separation to be completed with open items, with a reason |
 | GET | `/me/clearance-tasks` | Open clearance items assigned to me |
+| GET, PUT | `/settings/exit-interview-template` | Exit interview questions, self-service switch and aggregation threshold |
+| POST, GET | `/separations/{id}/exit-interview` | Start the interview for a separation, or fetch it |
+| GET | `/exit-interviews` | List exit interviews (HR only) |
+| GET, PATCH | `/exit-interviews/{id}` | View an interview, save answers and notes |
+| POST | `/exit-interviews/{id}/submit` | Submit and lock an interview |
+| GET | `/analytics/exit-feedback` | Aggregated answers for a period, shown only above the response threshold |
 
 Edits to departments, employees, separations and clearances send the record's current `version`; a stale version returns `409`.
 
@@ -107,7 +113,7 @@ go test ./...
 1. Requirements analysis and UI/UX design
 2. Project setup and authentication (done)
 3. Employee and department management (backend done)
-4. Resignation and exit management (separation workflow and exit clearance done; exit interviews and notifications next)
+4. Resignation and exit management (separation workflow, exit clearance and exit interviews done; notifications next)
 5. HR dashboard and analytics
 6. n8n workflow automation
 7. Testing, security and deployment
