@@ -110,7 +110,7 @@ export function Notice({ tone = "muted", children }: { tone?: "muted" | "danger"
 export const inputClass =
   "h-11 w-full rounded-full bg-raised px-4 text-sm text-ink placeholder:text-muted disabled:cursor-not-allowed disabled:opacity-60";
 
-export function Button({ variant = "primary", className, ...props }: ComponentProps<"button"> & { variant?: "primary" | "secondary" | "danger" }) {
+export function Button({ variant = "primary", size = "md", className, ...props }: ComponentProps<"button"> & { variant?: "primary" | "secondary" | "danger"; size?: "md" | "sm" }) {
   const tone = {
     primary: "bg-lime text-ground hover:opacity-90",
     secondary: "bg-raised text-ink hover:bg-line",
@@ -120,7 +120,12 @@ export function Button({ variant = "primary", className, ...props }: ComponentPr
     <button
       type="button"
       {...props}
-      className={cx("inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full px-5 text-[13px] font-bold transition disabled:cursor-not-allowed disabled:opacity-50", tone[variant], className)}
+      className={cx(
+        "inline-flex shrink-0 items-center justify-center gap-2 rounded-full font-bold transition disabled:cursor-not-allowed disabled:opacity-50",
+        size === "sm" ? "h-8 px-3 text-[11px]" : "h-10 px-5 text-[13px]",
+        tone[variant],
+        className,
+      )}
     />
   );
 }

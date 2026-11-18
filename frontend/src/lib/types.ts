@@ -143,3 +143,59 @@ export type ImportReport = {
   imported: number;
   errors: { row: number; field: string; message: string }[];
 };
+
+export type SeparationReason = { code: string; name: string; category: "voluntary" | "involuntary" | "other"; active: boolean };
+
+export type ApprovalStep = {
+  order: number;
+  approverType: "line_manager" | "role" | "user";
+  roleId?: string;
+  userId?: string;
+  fallback?: boolean;
+  decision: "pending" | "approved" | "rejected";
+  decidedAt?: string;
+  comment?: string;
+};
+
+export type ClearanceSummary = { id: string; status: string; totalItems: number; openItems: number; overridden: boolean };
+
+export type SeparationDetail = Separation & {
+  employeeId: string;
+  reasonCode: string;
+  category: string;
+  reasonDetails?: string;
+  requestedLastWorkingDay: string;
+  approvalSteps: ApprovalStep[];
+  statusHistory: { status: string; at: string; note?: string }[];
+  clearance?: ClearanceSummary;
+  tenureDaysAtExit?: number;
+};
+
+export type ClearanceItem = {
+  itemId: string;
+  category: string;
+  title: string;
+  assigneeType: "line_manager" | "role" | "user";
+  roleId?: string;
+  userId?: string;
+  fallback?: boolean;
+  status: "pending" | "cleared" | "not_applicable" | "blocked";
+  remarks?: string;
+  dueDate: string;
+};
+
+export type Clearance = {
+  id: string;
+  separationId: string;
+  employeeId: string;
+  status: "in_progress" | "completed" | "cancelled";
+  items: ClearanceItem[];
+  override?: { at: string; reason: string };
+  version: number;
+  employee?: EmployeeBrief;
+  lastWorkingDay?: string;
+  totalItems: number;
+  openItems: number;
+};
+
+export type SeparationSettings = { separationReasons: SeparationReason[]; noticePeriodDays: number };
