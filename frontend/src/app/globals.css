@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+/* PeoplePulse is a dark interface by design: near-black ground, soft charcoal
+   cards with large radii, pill controls, and two accents. Lime marks growth and
+   positive movement; orange marks departures and things needing attention. */
+@theme inline {
+  --color-ground: #0c0c0c;
+  --color-surface: #1a1a1a;
+  --color-raised: #272727;
+  --color-line: #333333;
+  --color-ink: #f4f4f2;
+  --color-muted: #9b9b96;
+  --color-lime: #b9f15c;
+  --color-orange: #f7941d;
+  --color-danger: #ff6b5e;
+
+  --font-display: var(--font-oswald), "Arial Narrow", "Segoe UI", sans-serif;
+  --font-sans: var(--font-inter), "Segoe UI", system-ui, sans-serif;
+
+  --radius-card: 1.75rem;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-ground);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+/* Section and card headings: condensed, uppercase, tightly set. */
+.display {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-lime);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
