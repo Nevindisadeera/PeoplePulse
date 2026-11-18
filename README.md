@@ -96,8 +96,36 @@ All paths are under `/api/v1`.
 | GET, PATCH | `/exit-interviews/{id}` | View an interview, save answers and notes |
 | POST | `/exit-interviews/{id}/submit` | Submit and lock an interview |
 | GET | `/analytics/exit-feedback` | Aggregated answers for a period, shown only above the response threshold |
+| GET | `/analytics/turnover` | Turnover for a period: overall, rolling 12 months, by month, department, reason and tenure band |
+| GET | `/analytics/headcount` | Current headcount and monthly opening, joiners, leavers and closing |
+| GET | `/analytics/retention` | Retention rate for a period, overall and by department |
+| GET | `/analytics/tenure` | Length of service of current staff and of leavers |
+| GET | `/analytics/data-quality` | Record problems that would distort the metrics |
+
+Analytics endpoints take `from`, `to` (YYYY-MM-DD, default: the last 12 calendar months) and an optional `departmentId`.
 
 Edits to departments, employees, separations and clearances send the record's current `version`; a stale version returns `409`.
+
+### How the metrics are calculated
+
+Every figure is derived from employment dates and completed separations, by one package (`backend/internal/metrics`) used by all endpoints.
+
+| Metric | Definition |
+| --- | --- |
+| Headcount on a date | People whose join date is on or before it and whose end date is empty or on or after it. The last working day counts as employed |
+| Average headcount | Mean of the daily headcount over every calendar day of the period |
+| Turnover rate | Completed separations with a last working day in the period ÷ average headcount × 100 |
+| Voluntary, involuntary, other | The same, split by the category of the separation reason. The three add up to the total |
+| Department turnover | Separations from the department ÷ the department's average headcount, using dated department history. Transfers are reported beside it and are not turnover |
+| Retention rate | People employed on the first day who are still employed on the last day ÷ people employed on the first day × 100. It is not 100 minus turnover |
+| Tenure | Mean and median length of service, for current staff as of a date and for leavers in a period |
+
+Every rate comes with its numerator, denominator and flags. A rate has no value (`null`), instead of a misleading number, when:
+
+- average headcount is zero (`no_headcount`);
+- the period starts before the organization's analytics start date, the date from which its data is complete (`before_analytics_start`).
+
+It keeps its value but is flagged when the average headcount is below the small-group threshold (`small_group`, default 5) or the month has not finished (`partial_period`). Employment types the organization excludes from headcount are left out of both numerator and denominator.
 
 ### Notifications and the n8n webhook
 
@@ -132,7 +160,7 @@ go test ./...
 2. Project setup and authentication (done)
 3. Employee and department management (backend done)
 4. Resignation and exit management (backend done)
-5. HR dashboard and analytics
+5. HR dashboard and analytics (metric engine and analytics endpoints done; dashboard summary and reports next)
 6. n8n workflow automation
 7. Testing, security and deployment
 

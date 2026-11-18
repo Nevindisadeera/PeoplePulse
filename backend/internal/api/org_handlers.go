@@ -33,6 +33,7 @@ func viewOrg(o *domain.Organization) orgView {
 	return orgView{Organization: o, Settings: map[string]any{
 		"employmentTypes": o.EmploymentTypes(), "noticePeriodDays": o.NoticePeriodDays(),
 		"separationReasons": o.SeparationReasons(), "approvalChain": chain, "clearanceTemplate": template,
+		"analyticsStartDate": o.Settings.AnalyticsStartDate, "smallGroupThreshold": o.SmallGroupThreshold(),
 	}}
 }
 
@@ -62,6 +63,9 @@ func (s *Server) handleUpdateOrganization(w http.ResponseWriter, r *http.Request
 		TimeZone *string `json:"timeZone"`
 		// Default notice period, used to propose a last working day.
 		NoticePeriodDays *int `json:"noticePeriodDays" validate:"omitempty,min=0,max=365"`
+		// Earliest date from which employee data is complete; "" clears it.
+		AnalyticsStartDate  *string `json:"analyticsStartDate"`
+		SmallGroupThreshold *int    `json:"smallGroupThreshold" validate:"omitempty,min=1,max=50"`
 	}
 	if err := httpx.Decode(w, r, &in); err != nil {
 		httpx.Fail(w, r, err)
@@ -81,12 +85,35 @@ func (s *Server) handleUpdateOrganization(w http.ResponseWriter, r *http.Request
 	if in.NoticePeriodDays != nil {
 		set["settings.noticePeriodDays"] = *in.NoticePeriodDays
 	}
-	if len(set) > 0 {
+	if in.SmallGroupThreshold != nil {
+		set["settings.smallGroupThreshold"] = *in.SmallGroupThreshold
+	}
+	unset := []string{}
+	if in.AnalyticsStartDate != nil {
+		if *in.AnalyticsStartDate == "" {
+			unset = append(unset, "settings.analyticsStartDate")
+		} else {
+			start, err := domain.ParseDate(*in.AnalyticsStartDate)
+			if err != nil {
+				httpx.Fail(w, r, httpx.Invalid(map[string]string{"analyticsStartDate": err.Error()}))
+				return
+			}
+			if start.After(domain.Today(time.UTC).AddDays(1)) {
+				httpx.Fail(w, r, httpx.Invalid(map[string]string{"analyticsStartDate": "cannot be in the future"}))
+				return
+			}
+			set["settings.analyticsStartDate"] = start
+		}
+	}
+	if len(set) > 0 || len(unset) > 0 {
 		changes := map[string]any{}
 		for k, v := range set {
 			changes[k] = v
 		}
-		if err := s.store.UpdateOrganization(r.Context(), orgID, set); err != nil {
+		for _, k := range unset {
+			changes[k] = nil
+		}
+		if err := s.store.UpdateOrganization(r.Context(), orgID, set, unset...); err != nil {
 			httpx.Fail(w, r, err)
 			return
 		}
