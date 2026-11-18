@@ -2,6 +2,7 @@
 package httpx
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"log/slog"
@@ -50,12 +51,23 @@ func JSON(w http.ResponseWriter, status int, v any) {
 	}
 }
 
+// StatusClientClosedRequest is the conventional (non-standard) status recorded
+// in the request log when the client went away before a response was written.
+const StatusClientClosedRequest = 499
+
 // Fail writes err as the standard error envelope. Unknown errors become a 500
 // with a generic message; details go to the log only.
 func Fail(w http.ResponseWriter, r *http.Request, err error) {
 	reqID := middleware.GetReqID(r.Context())
 	var e *Error
 	if !errors.As(err, &e) {
+		// The client closed the connection (for example, the user changed a
+		// filter while a request was in flight). Nothing went wrong on the
+		// server and nobody is waiting for a response.
+		if r.Context().Err() != nil || errors.Is(err, context.Canceled) {
+			w.WriteHeader(StatusClientClosedRequest)
+			return
+		}
 		slog.Error("unhandled error", "requestId", reqID, "path", r.URL.Path, "err", err)
 		e = &Error{Status: 500, Code: "INTERNAL", Message: "Something went wrong. Quote the request ID if you report this."}
 	}
