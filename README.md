@@ -18,6 +18,8 @@ Employee Turnover & Retention Management Platform. A reusable, organization-inde
 
 ```
 backend/                    Go REST API
+frontend/                   Next.js web application
+scripts/seed-demo.mjs       Fills an empty organization with demo data
 PeoplePulse-Proposal.pdf    Project proposal (requirements, architecture, roadmap)
 PeoplePulse-Proposal.html   Same proposal as a web page
 ```
@@ -147,11 +149,38 @@ Event types: `separation.approval_requested`, `separation.submitted`, `separatio
 
 Header row required. Columns: `employeeNumber`, `fullName`, `departmentCode`, `employmentType`, `joinDate` (YYYY-MM-DD) are required; `workEmail`, `phone`, `jobTitle`, `managerEmployeeNumber` are optional. Nothing is saved unless every row is valid.
 
+## Running the frontend
+
+Requirements: Node.js 20+ and the API running on port 8080.
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open http://localhost:3000 and sign in with the admin account created by the bootstrap command. See [frontend/README.md](frontend/README.md) for details.
+
+### Demo data
+
+To see the dashboard with data, fill an empty organization through the API (the script refuses to run if employees already exist):
+
+```bash
+# PowerShell: $env:SEED_EMAIL = "admin@example.com"; $env:SEED_PASSWORD = "..."
+SEED_EMAIL=admin@example.com SEED_PASSWORD=your-password node scripts/seed-demo.mjs
+```
+
+It creates five departments, about 55 employees, twelve completed separations over the last year and one pending resignation.
+
 ## Tests
 
 ```bash
 cd backend
 go test ./...
+
+cd ../frontend
+npm run lint
+npm run build
 ```
 
 ## Roadmap
@@ -160,7 +189,7 @@ go test ./...
 2. Project setup and authentication (done)
 3. Employee and department management (backend done)
 4. Resignation and exit management (backend done)
-5. HR dashboard and analytics (metric engine and analytics endpoints done; dashboard summary and reports next)
+5. HR dashboard and analytics (metric engine, analytics endpoints and the dashboard screen done; reports next)
 6. n8n workflow automation
 7. Testing, security and deployment
 
