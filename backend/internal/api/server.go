@@ -140,6 +140,9 @@ func (s *Server) Routes() http.Handler {
 			r.With(analytics).Get("/analytics/retention", s.handleRetention)
 			r.With(analytics).Get("/analytics/tenure", s.handleTenure)
 			r.With(s.require(domain.PermEmployeeManage)).Get("/analytics/data-quality", s.handleDataQuality)
+
+			r.With(s.require(domain.PermReportExport)).Get("/reports/{type}", s.handleReport)
+			r.With(s.require(domain.PermAuditRead)).Get("/audit-logs", s.handleListAuditLogs)
 		})
 	})
 

@@ -103,6 +103,8 @@ All paths are under `/api/v1`.
 | GET | `/analytics/retention` | Retention rate for a period, overall and by department |
 | GET | `/analytics/tenure` | Length of service of current staff and of leavers |
 | GET | `/analytics/data-quality` | Record problems that would distort the metrics |
+| GET | `/reports/{type}` | Standard reports: `employees`, `separations`, `clearance`, `turnover-summary`. Add `?format=csv` to download |
+| GET | `/audit-logs` | Who did what and when, filterable by action, record, user and date |
 
 Analytics endpoints take `from`, `to` (YYYY-MM-DD, default: the last 12 calendar months) and an optional `departmentId`.
 
@@ -189,7 +191,7 @@ npm run build
 2. Project setup and authentication (done)
 3. Employee and department management (backend done)
 4. Resignation and exit management (backend done)
-5. HR dashboard and analytics (metric engine, analytics endpoints and the dashboard screen done; reports next)
+5. HR dashboard and analytics (backend done, including reports and the audit log)
 
 Web screens so far: sign-in, dashboard, employees, departments, separations, clearance, settings.
 6. n8n workflow automation
