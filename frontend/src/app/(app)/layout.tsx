@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, ClipboardCheck, DoorOpen, LayoutDashboard, LogOut, Users } from "lucide-react";
+import { Building2, ClipboardCheck, DoorOpen, LayoutDashboard, LogOut, Settings, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -17,6 +17,7 @@ const NAV = [
   { href: "/departments", label: "Departments", icon: Building2, permissions: ["department.read"] },
   { href: "/separations", label: "Separations", icon: DoorOpen, permissions: ["separation.read", "separation.submit", "separation.manage", "separation.approve"] },
   { href: "/clearance", label: "Clearance", icon: ClipboardCheck, permissions: ["clearance.read", "clearance.manage", "clearance.update_assigned"] },
+  { href: "/settings", label: "Settings", icon: Settings, permissions: ["org.settings.manage", "exit_interview.manage"] },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {

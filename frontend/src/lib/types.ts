@@ -199,3 +199,29 @@ export type Clearance = {
 };
 
 export type SeparationSettings = { separationReasons: SeparationReason[]; noticePeriodDays: number };
+
+export type Assignee = { approverType?: string; assigneeType?: string; roleId?: string; userId?: string };
+
+export type ChainStep = { approverType: "line_manager" | "role" | "user"; roleId?: string; userId?: string };
+
+export type ClearanceTemplateItem = { category: string; title: string; assigneeType: "line_manager" | "role" | "user"; roleId?: string; userId?: string; active: boolean };
+
+export type InterviewQuestion = { id: string; text: string; type: "rating" | "choice" | "text"; options?: string[]; required: boolean; active: boolean };
+
+export type InterviewTemplate = { enabled: boolean; employeeSelfService: boolean; minAggregateResponses: number; questions: InterviewQuestion[] };
+
+// The organization with every settings section, as returned by GET /organization.
+export type FullOrganization = {
+  id: string;
+  name: string;
+  timeZone: string;
+  settings: {
+    employmentTypes: EmploymentType[];
+    noticePeriodDays: number;
+    separationReasons: SeparationReason[];
+    approvalChain: ChainStep[];
+    clearanceTemplate: ClearanceTemplateItem[];
+    analyticsStartDate: string | null;
+    smallGroupThreshold: number;
+  };
+};
