@@ -132,6 +132,14 @@ func (s *Server) Routes() http.Handler {
 			r.Patch("/exit-interviews/{id}", s.handleUpdateExitInterview)
 			r.Post("/exit-interviews/{id}/submit", s.handleSubmitExitInterview)
 			r.With(s.require(domain.PermExitInterviewRead)).Get("/analytics/exit-feedback", s.handleExitFeedback)
+
+			// Analytics: department heads are limited to their own departments inside the handlers.
+			analytics := s.require(domain.PermAnalyticsRead)
+			r.With(analytics).Get("/analytics/turnover", s.handleTurnover)
+			r.With(analytics).Get("/analytics/headcount", s.handleHeadcount)
+			r.With(analytics).Get("/analytics/retention", s.handleRetention)
+			r.With(analytics).Get("/analytics/tenure", s.handleTenure)
+			r.With(s.require(domain.PermEmployeeManage)).Get("/analytics/data-quality", s.handleDataQuality)
 		})
 	})
 

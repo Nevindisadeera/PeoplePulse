@@ -32,6 +32,21 @@ type OrgSettings struct {
 	ApprovalChain     []ChainStep             `bson:"approvalChain,omitempty" json:"approvalChain"`
 	ClearanceTemplate []ClearanceTemplateItem `bson:"clearanceTemplate,omitempty" json:"clearanceTemplate"`
 	ExitInterview     *ExitInterviewTemplate  `bson:"exitInterview,omitempty" json:"exitInterview"`
+	// AnalyticsStartDate is the earliest date from which the data is complete:
+	// everyone employed on or after it has a record, including people who have
+	// since left. No rate is stated for a period that starts before it.
+	AnalyticsStartDate *Date `bson:"analyticsStartDate,omitempty" json:"analyticsStartDate"`
+	// SmallGroupThreshold is the average headcount below which a rate is flagged.
+	SmallGroupThreshold *int `bson:"smallGroupThreshold,omitempty" json:"smallGroupThreshold"`
+}
+
+const DefaultSmallGroupThreshold = 5
+
+func (o *Organization) SmallGroupThreshold() int {
+	if o.Settings.SmallGroupThreshold == nil {
+		return DefaultSmallGroupThreshold
+	}
+	return *o.Settings.SmallGroupThreshold
 }
 
 // InterviewTemplate returns the exit interview settings; the feature is off

@@ -46,9 +46,20 @@ func (s *Store) updateVersioned(ctx context.Context, coll string, orgID, id bson
 
 // ---- organization settings ----
 
-func (s *Store) UpdateOrganization(ctx context.Context, id bson.ObjectID, set bson.M) error {
+func (s *Store) UpdateOrganization(ctx context.Context, id bson.ObjectID, set bson.M, unset ...string) error {
+	if set == nil {
+		set = bson.M{}
+	}
 	set["updatedAt"] = time.Now().UTC()
-	res, err := s.DB.Collection("organizations").UpdateOne(ctx, bson.M{"_id": id}, bson.M{"$set": set})
+	update := bson.M{"$set": set}
+	if len(unset) > 0 {
+		u := bson.M{}
+		for _, f := range unset {
+			u[f] = ""
+		}
+		update["$unset"] = u
+	}
+	res, err := s.DB.Collection("organizations").UpdateOne(ctx, bson.M{"_id": id}, update)
 	if err != nil {
 		return mapErr(err)
 	}
