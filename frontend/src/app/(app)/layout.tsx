@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutDashboard, LogOut } from "lucide-react";
+import { Building2, LayoutDashboard, LogOut, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -9,8 +9,13 @@ import { IconButton, Logo, Skeleton } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
 import { initials } from "@/lib/format";
 
-// Sections are added here as their pages are built.
-const NAV = [{ href: "/", label: "Dashboard", icon: LayoutDashboard }];
+// Sections are added here as their pages are built. A section is shown when
+// the role holds any of its permissions; the dashboard is for everyone.
+const NAV = [
+  { href: "/", label: "Dashboard", icon: LayoutDashboard, permissions: [] as string[] },
+  { href: "/employees", label: "Employees", icon: Users, permissions: ["employee.read", "employee.read_department"] },
+  { href: "/departments", label: "Departments", icon: Building2, permissions: ["department.read"] },
+];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
@@ -37,8 +42,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <Logo />
         </Link>
         <nav aria-label="Main" className="flex flex-wrap items-center gap-2">
-          {NAV.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href;
+          {NAV.filter((item) => item.permissions.length === 0 || item.permissions.some(auth.can)).map(({ href, label, icon: Icon }) => {
+            const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
             return (
               <Link
                 key={href}

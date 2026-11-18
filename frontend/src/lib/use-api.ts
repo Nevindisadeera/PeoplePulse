@@ -1,34 +1,41 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api, ApiError } from "./api";
 
-type Result<T> = { loading: boolean; data: T | null; error: ApiError | null };
+type Result<T> = { loading: boolean; data: T | null; error: ApiError | null; reload: () => void };
 
-// useApi loads a GET endpoint and reloads when the path changes. Pass null to
-// skip the request, for example when the user lacks the permission for it.
+// useApi loads a GET endpoint and reloads when the path changes or reload()
+// is called. Pass null to skip the request, for example when the user lacks
+// the permission for it.
 export function useApi<T>(path: string | null): Result<T> {
-  const [state, setState] = useState<{ path: string | null; data: T | null; error: ApiError | null }>({
-    path: null,
+  const [version, setVersion] = useState(0);
+  const [state, setState] = useState<{ key: string | null; data: T | null; error: ApiError | null }>({
+    key: null,
     data: null,
     error: null,
   });
+  const reload = useCallback(() => setVersion((v) => v + 1), []);
+  const key = path === null ? null : `${path}#${version}`;
 
   useEffect(() => {
-    if (path === null) return;
+    if (path === null || key === null) return;
     const controller = new AbortController();
     api<T>(path, { signal: controller.signal })
-      .then((data) => setState({ path, data, error: null }))
+      .then((data) => setState({ key, data, error: null }))
       .catch((error: unknown) => {
         if (controller.signal.aborted) return;
         const apiError = error instanceof ApiError ? error : new ApiError(0, "NETWORK", "The server could not be reached.");
-        setState({ path, data: null, error: apiError });
+        setState({ key, data: null, error: apiError });
       });
     return () => controller.abort();
-  }, [path]);
+  }, [path, key]);
 
-  if (path === null) return { loading: false, data: null, error: null };
-  // Until the response for the current path arrives, the previous one is stale.
-  if (state.path !== path) return { loading: true, data: null, error: null };
-  return { loading: false, data: state.data, error: state.error };
+  if (key === null) return { loading: false, data: null, error: null, reload };
+  if (state.key !== key) {
+    // While reloading the same path, keep showing the previous data instead of flashing a skeleton.
+    const samePath = state.key?.startsWith(`${path}#`) ?? false;
+    return { loading: !samePath, data: samePath ? state.data : null, error: null, reload };
+  }
+  return { loading: false, data: state.data, error: state.error, reload };
 }

@@ -1,4 +1,6 @@
-import type { ComponentProps } from "react";
+"use client";
+
+import { useEffect, type ComponentProps } from "react";
 
 function cx(...parts: (string | false | null | undefined)[]) {
   return parts.filter(Boolean).join(" ");
@@ -100,5 +102,115 @@ export function Notice({ tone = "muted", children }: { tone?: "muted" | "danger"
     <p role={tone === "danger" ? "alert" : undefined} className={cx("rounded-2xl px-4 py-3 text-[13px]", tone === "danger" ? "bg-danger/15 text-danger" : "bg-raised text-muted")}>
       {children}
     </p>
+  );
+}
+
+// ---- form and page building blocks ----
+
+export const inputClass =
+  "h-11 w-full rounded-full bg-raised px-4 text-sm text-ink placeholder:text-muted disabled:cursor-not-allowed disabled:opacity-60";
+
+export function Button({ variant = "primary", className, ...props }: ComponentProps<"button"> & { variant?: "primary" | "secondary" | "danger" }) {
+  const tone = {
+    primary: "bg-lime text-ground hover:opacity-90",
+    secondary: "bg-raised text-ink hover:bg-line",
+    danger: "bg-orange text-ground hover:opacity-90",
+  };
+  return (
+    <button
+      type="button"
+      {...props}
+      className={cx("inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full px-5 text-[13px] font-bold transition disabled:cursor-not-allowed disabled:opacity-50", tone[variant], className)}
+    />
+  );
+}
+
+// Field pairs a label with its control and shows the validation message from the API under it.
+export function Field({ label, error, hint, children }: { label: string; error?: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <label className="flex min-w-0 flex-col gap-1.5 text-xs font-semibold text-muted">
+      {label}
+      {children}
+      {error ? <span className="font-medium text-danger">{label} {error}.</span> : hint ? <span className="font-normal">{hint}</span> : null}
+    </label>
+  );
+}
+
+const BADGE_TONES = {
+  lime: "bg-lime/15 text-lime",
+  orange: "bg-orange/15 text-orange",
+  muted: "bg-raised text-muted",
+  ink: "bg-raised text-ink",
+};
+
+export function Badge({ tone = "muted", children }: { tone?: keyof typeof BADGE_TONES; children: React.ReactNode }) {
+  return <span className={cx("inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-[11px] font-bold", BADGE_TONES[tone])}>{children}</span>;
+}
+
+export function PageHeader({ title, children }: { title: string; children?: React.ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-end justify-between gap-4">
+      <h1 className="display text-[2.6rem] font-bold">{title}</h1>
+      {children && <div className="flex flex-wrap items-center gap-2">{children}</div>}
+    </div>
+  );
+}
+
+// Modal is a centred dialog. It closes on Escape and on a click outside the panel.
+export function Modal({ title, onClose, children, wide }: { title: string; onClose: () => void; children: React.ReactNode; wide?: boolean }) {
+  // Listen on the document: focus can leave the dialog (a button that becomes
+  // disabled while saving drops it), and Escape must still work then.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-30 flex items-end justify-center overflow-y-auto bg-black/70 p-0 sm:items-center sm:p-6"
+      onMouseDown={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        className={cx("flex max-h-[92dvh] w-full flex-col gap-5 overflow-y-auto rounded-t-[1.75rem] bg-surface p-6 ring-1 ring-line sm:rounded-card", wide ? "sm:max-w-2xl" : "sm:max-w-lg")}
+      >
+        <header className="flex items-center justify-between gap-4">
+          <h2 className="display text-xl font-semibold">{title}</h2>
+          <button type="button" onClick={onClose} aria-label="Close" className="flex size-9 items-center justify-center rounded-full bg-raised text-lg leading-none text-ink hover:bg-line">
+            ×
+          </button>
+        </header>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+export function Pagination({ page, pageSize, total, onPage }: { page: number; pageSize: number; total: number; onPage: (page: number) => void }) {
+  const pages = Math.max(1, Math.ceil(total / pageSize));
+  if (total === 0) return null;
+  const first = (page - 1) * pageSize + 1;
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted">
+      <span>
+        {first}–{Math.min(total, page * pageSize)} of {total}
+      </span>
+      <div className="flex items-center gap-2">
+        <Button variant="secondary" disabled={page <= 1} onClick={() => onPage(page - 1)}>
+          Previous
+        </Button>
+        <span className="tabular-nums">
+          Page {page} of {pages}
+        </span>
+        <Button variant="secondary" disabled={page >= pages} onClick={() => onPage(page + 1)}>
+          Next
+        </Button>
+      </div>
+    </div>
   );
 }
