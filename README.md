@@ -190,6 +190,8 @@ npm run build
 3. Employee and department management (backend done)
 4. Resignation and exit management (backend done)
 5. HR dashboard and analytics (metric engine, analytics endpoints and the dashboard screen done; reports next)
+
+Web screens so far: sign-in, dashboard, employees, departments.
 6. n8n workflow automation
 7. Testing, security and deployment
 

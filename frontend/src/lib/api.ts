@@ -12,9 +12,17 @@ export class ApiError extends Error {
     public code: string,
     message: string,
     public fields?: Record<string, string>,
+    // The full response body, for endpoints that return more than the error envelope.
+    public body?: unknown,
   ) {
     super(message);
   }
+}
+
+// errorMessage turns anything thrown by a request into text for the user.
+export function errorMessage(error: unknown): string {
+  if (error instanceof ApiError) return error.message;
+  return "The server could not be reached. Check your connection and try again.";
 }
 
 // The access token lives in memory only. After a page reload it is obtained
@@ -34,7 +42,7 @@ async function parse(res: Response) {
 
 function toError(res: Response, body: unknown): ApiError {
   const err = (body as { error?: { code?: string; message?: string; fields?: Record<string, string> } } | null)?.error;
-  return new ApiError(res.status, err?.code ?? "ERROR", err?.message ?? "The request could not be completed.", err?.fields);
+  return new ApiError(res.status, err?.code ?? "ERROR", err?.message ?? "The request could not be completed.", err?.fields, body);
 }
 
 // refreshSession exchanges the refresh cookie for a new access token. Refresh
@@ -79,21 +87,22 @@ export async function logout(): Promise<void> {
   await fetch(`${BASE}/auth/logout`, { method: "POST", credentials: "include" }).catch(() => undefined);
 }
 
-type Options = { method?: string; json?: unknown; signal?: AbortSignal };
+// json sends a JSON body; form sends multipart data (file uploads).
+type Options = { method?: string; json?: unknown; form?: FormData; signal?: AbortSignal };
 
 // api calls an authenticated endpoint. When the access token has expired it
 // refreshes once and repeats the request.
 export async function api<T>(path: string, options: Options = {}): Promise<T> {
   const send = () =>
     fetch(BASE + path, {
-      method: options.method ?? (options.json === undefined ? "GET" : "POST"),
+      method: options.method ?? (options.json === undefined && !options.form ? "GET" : "POST"),
       credentials: "include",
       signal: options.signal,
       headers: {
         ...(options.json === undefined ? {} : { "Content-Type": "application/json" }),
         ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
       },
-      body: options.json === undefined ? undefined : JSON.stringify(options.json),
+      body: options.form ?? (options.json === undefined ? undefined : JSON.stringify(options.json)),
     });
 
   let res = await send();

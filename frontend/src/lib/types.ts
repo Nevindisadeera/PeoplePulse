@@ -94,3 +94,52 @@ export type Page<T> = { data: T[]; page: number; pageSize: number; total: number
 export type NotificationList = Page<{ id: string; title: string; body: string; link: string; createdAt: string; readAt?: string }> & {
   unreadCount: number;
 };
+
+export type DepartmentAssignment = { departmentId: string; from: string; to?: string };
+
+export type Employee = {
+  id: string;
+  employeeNumber: string;
+  fullName: string;
+  workEmail?: string;
+  phone?: string;
+  departmentId: string;
+  departmentHistory: DepartmentAssignment[];
+  jobTitle?: string;
+  employmentType: string;
+  managerId?: string;
+  joinDate: string;
+  endDate?: string;
+  status: "active" | "serving_notice" | "separated";
+  version: number;
+};
+
+export type Department = {
+  id: string;
+  name: string;
+  code: string;
+  parentId?: string;
+  headEmployeeId?: string;
+  status: "active" | "archived";
+  version: number;
+  headcount: number;
+};
+
+export type EmploymentType = { code: string; name: string; countsInHeadcount: boolean; active: boolean };
+
+export type Organization = {
+  id: string;
+  name: string;
+  timeZone: string;
+  settings: { employmentTypes: EmploymentType[]; noticePeriodDays: number; analyticsStartDate: string | null; smallGroupThreshold: number };
+};
+
+export type TimelineEvent = { date: string; type: "joined" | "transferred" | "separated"; departmentName?: string; fromDepartmentName?: string };
+
+export type ImportReport = {
+  dryRun: boolean;
+  totalRows: number;
+  validRows: number;
+  imported: number;
+  errors: { row: number; field: string; message: string }[];
+};

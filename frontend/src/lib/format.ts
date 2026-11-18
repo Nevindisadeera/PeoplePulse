@@ -43,3 +43,21 @@ export function initials(name: string): string {
     .map((part) => part[0]!.toUpperCase())
     .join("");
 }
+
+export const EMPLOYEE_STATUS: Record<string, { label: string; tone: "lime" | "orange" | "muted" }> = {
+  active: { label: "Active", tone: "lime" },
+  serving_notice: { label: "Serving notice", tone: "orange" },
+  separated: { label: "Left", tone: "muted" },
+};
+
+// "serving_notice" -> "Serving notice"
+export function humanize(code: string): string {
+  const text = code.replace(/_/g, " ");
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+// Today's date as YYYY-MM-DD in the browser's time zone, for date inputs.
+export function todayISO(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
