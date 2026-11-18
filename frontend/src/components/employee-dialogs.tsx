@@ -5,31 +5,9 @@ import { api, ApiError, errorMessage } from "@/lib/api";
 import { todayISO } from "@/lib/format";
 import type { Department, Employee, ImportReport, Organization } from "@/lib/types";
 import { useApi } from "@/lib/use-api";
+import { useSubmit } from "@/lib/use-submit";
 import { EmployeePicker } from "./employee-picker";
 import { Button, Field, inputClass, Modal, Notice } from "./ui";
-
-type Fields = Record<string, string> | undefined;
-
-// useSubmit runs a save and keeps the API's message and per-field errors.
-function useSubmit() {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [fields, setFields] = useState<Fields>();
-  async function run(action: () => Promise<void>) {
-    setBusy(true);
-    setError(null);
-    setFields(undefined);
-    try {
-      await action();
-    } catch (err) {
-      setFields(err instanceof ApiError ? err.fields : undefined);
-      // When every problem is attached to a field, the summary line would only repeat them.
-      setError(err instanceof ApiError && err.fields && err.code === "VALIDATION_FAILED" ? "Check the highlighted fields." : errorMessage(err));
-      setBusy(false);
-    }
-  }
-  return { busy, error, fields, run };
-}
 
 function useDepartments() {
   return useApi<{ data: Department[] }>("/departments?status=active");

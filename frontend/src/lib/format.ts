@@ -61,3 +61,42 @@ export function todayISO(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
+
+type Tone = "lime" | "orange" | "muted" | "ink";
+
+export const SEPARATION_STATUS: Record<string, { label: string; tone: Tone }> = {
+  pending_approval: { label: "Awaiting approval", tone: "orange" },
+  approved: { label: "Approved · serving notice", tone: "lime" },
+  completed: { label: "Completed", tone: "muted" },
+  rejected: { label: "Not approved", tone: "muted" },
+  withdrawn: { label: "Withdrawn", tone: "muted" },
+};
+
+export const SEPARATION_TYPES: Record<string, string> = {
+  resignation: "Resignation",
+  termination: "Termination",
+  redundancy: "Redundancy",
+  retirement: "Retirement",
+  end_of_contract: "End of contract",
+  other: "Other",
+};
+
+export const ITEM_STATUS: Record<string, { label: string; tone: Tone }> = {
+  pending: { label: "To do", tone: "ink" },
+  cleared: { label: "Cleared", tone: "lime" },
+  not_applicable: { label: "Not applicable", tone: "muted" },
+  blocked: { label: "Blocked", tone: "orange" },
+};
+
+// "2026-11-18T07:19:02Z" -> "18 Nov 2026, 12:49" in the browser's time zone.
+export function formatDateTime(iso: string | undefined): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return `${d.getDate()} ${["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][d.getMonth()]} ${d.getFullYear()}, ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+// addDays("2026-11-18", 30) -> "2026-12-18"
+export function addDays(iso: string, days: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+}
