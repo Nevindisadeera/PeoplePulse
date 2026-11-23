@@ -1,0 +1,127 @@
+{
+  "name": "PeoplePulse: monthly HR report",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "months",
+              "triggerAtDayOfMonth": 1,
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      },
+      "id": "schedule",
+      "name": "First day of each month",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.PEOPLEPULSE_API_URL }}/api/v1/integrations/reports/monthly",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Integration-Key",
+              "value": "={{ $env.PEOPLEPULSE_INTEGRATION_KEY }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "get-last-month-figures",
+      "name": "Get last month figures",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        500,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Lays out the figures the API calculated. Nothing is computed here.\nconst pct = (r) => (r.value === null ? 'n/a' : r.value.toFixed(1) + '%') + ' (' + r.numerator + ' of ' + r.denominator + ' average headcount)';\nconst out = [];\nfor (const o of $input.first().json.organizations || []) {\n  const rows = [\n    ['Headcount at month end', o.closingHeadcount + ' (was ' + o.openingHeadcount + ')'],\n    ['Joiners', o.joiners],\n    ['Leavers', o.leavers],\n    ['Turnover this month', pct(o.turnover.total)],\n    ['Voluntary', pct(o.turnover.voluntary)],\n    ['Involuntary', pct(o.turnover.involuntary)],\n    ['Turnover, last 12 months', pct(o.rolling12Months.total)],\n    ['Resignations awaiting approval', o.separationsAwaitingApproval],\n    ['Employees serving notice', o.employeesServingNotice],\n    ['Open clearance items', o.openClearanceItems + ' (' + o.overdueClearanceItems + ' overdue)'],\n  ].map(([k, v]) => '<tr><td>' + k + '</td><td><b>' + v + '</b></td></tr>').join('');\n  const notes = o.warnings.length ? '<p>Notes: ' + o.warnings.join(', ').replace(/_/g, ' ') + '.</p>' : '';\n  for (const r of o.recipients) out.push({ json: { email: r.email, name: r.name, organization: o.organizationName, month: o.month, rows, notes, link: o.link } });\n}\nreturn out;"
+      },
+      "id": "one-email-per-recipient",
+      "name": "One email per recipient",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        760,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.PEOPLEPULSE_MAIL_FROM }}",
+        "toEmail": "={{ $json.email }}",
+        "subject": "=PeoplePulse HR report for {{ $json.month }}: {{ $json.organization }}",
+        "emailFormat": "html",
+        "html": "=<div style=\"font-family:Arial,sans-serif;font-size:14px;color:#111\"><p>Hello {{ $json.name }},</p><p>The HR summary for {{ $json.month }}:</p><table cellpadding=\"6\" style=\"border-collapse:collapse\">{{ $json.rows }}</table>{{ $json.notes }}<p><a href=\"{{ $json.link }}\">Open the dashboard</a></p></div>",
+        "options": {}
+      },
+      "id": "send-report",
+      "name": "Send report",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1020,
+        300
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "REPLACE_WITH_YOUR_SMTP_CREDENTIAL",
+          "name": "SMTP account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "First day of each month": {
+      "main": [
+        [
+          {
+            "node": "Get last month figures",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get last month figures": {
+      "main": [
+        [
+          {
+            "node": "One email per recipient",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "One email per recipient": {
+      "main": [
+        [
+          {
+            "node": "Send report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "none"
+  },
+  "pinData": {}
+}

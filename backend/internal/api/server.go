@@ -66,6 +66,14 @@ func (s *Server) Routes() http.Handler {
 		r.Post("/auth/forgot-password", s.handleForgotPassword)
 		r.Post("/auth/reset-password", s.handleResetPassword)
 
+		// Endpoints for the automation tool (n8n), authenticated with a service key.
+		r.Route("/integrations", func(r chi.Router) {
+			r.Use(s.integrationAuth)
+			r.Get("/reminders/clearance", s.handleClearanceReminders)
+			r.Get("/reminders/last-working-day", s.handleLastDayReminders)
+			r.Get("/reports/monthly", s.handleMonthlyReportData)
+		})
+
 		r.Group(func(r chi.Router) {
 			r.Use(s.authenticate)
 			r.Get("/me", s.handleMe)

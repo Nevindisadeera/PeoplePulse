@@ -223,6 +223,8 @@ export type FullOrganization = {
     clearanceTemplate: ClearanceTemplateItem[];
     analyticsStartDate: string | null;
     smallGroupThreshold: number;
+    clearanceReminderDays: number;
+    lastDayReminderDays: number;
   };
 };
 

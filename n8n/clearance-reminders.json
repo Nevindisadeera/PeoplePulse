@@ -1,0 +1,125 @@
+{
+  "name": "PeoplePulse: clearance reminders",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "id": "schedule",
+      "name": "Every day at 08:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.PEOPLEPULSE_API_URL }}/api/v1/integrations/reminders/clearance",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Integration-Key",
+              "value": "={{ $env.PEOPLEPULSE_INTEGRATION_KEY }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "get-due-clearance-items",
+      "name": "Get due clearance items",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        500,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// One email per person, listing everything the API says is due for them.\nconst out = [];\nfor (const org of $input.first().json.organizations || []) {\n  for (const r of org.reminders) {\n    const rows = r.items.map((i) => '<tr><td>' + i.employeeName + ' (' + i.employeeNumber + ')</td><td>' + i.title + '</td><td>' + (i.overdue ? '<b>Overdue since ' + i.dueDate + '</b>' : 'Due ' + i.dueDate) + '</td><td><a href=\"' + i.link + '\">Open</a></td></tr>').join('');\n    out.push({ json: { email: r.email, name: r.name, organization: org.organizationName, count: r.items.length, rows } });\n  }\n}\nreturn out;"
+      },
+      "id": "one-email-per-assignee",
+      "name": "One email per assignee",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        760,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.PEOPLEPULSE_MAIL_FROM }}",
+        "toEmail": "={{ $json.email }}",
+        "subject": "=PeoplePulse: {{ $json.count }} clearance item(s) need your attention",
+        "emailFormat": "html",
+        "html": "=<div style=\"font-family:Arial,sans-serif;font-size:14px;color:#111\"><p>Hello {{ $json.name }},</p><p>These exit clearance items are assigned to you and are due soon or overdue:</p><table cellpadding=\"6\" style=\"border-collapse:collapse\">{{ $json.rows }}</table></div>",
+        "options": {}
+      },
+      "id": "send-reminder",
+      "name": "Send reminder",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1020,
+        300
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "REPLACE_WITH_YOUR_SMTP_CREDENTIAL",
+          "name": "SMTP account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Every day at 08:00": {
+      "main": [
+        [
+          {
+            "node": "Get due clearance items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get due clearance items": {
+      "main": [
+        [
+          {
+            "node": "One email per assignee",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "One email per assignee": {
+      "main": [
+        [
+          {
+            "node": "Send reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "none"
+  },
+  "pinData": {}
+}

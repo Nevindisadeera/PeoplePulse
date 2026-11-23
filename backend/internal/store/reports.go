@@ -119,3 +119,40 @@ func (s *Store) ReportClearances(ctx context.Context, orgID bson.ObjectID) ([]do
 	out := []domain.ExitClearance{}
 	return out, cur.All(ctx, &out)
 }
+
+// ListOrganizations returns every organization, for scheduled work that covers all tenants.
+func (s *Store) ListOrganizations(ctx context.Context) ([]domain.Organization, error) {
+	cur, err := s.DB.Collection("organizations").Find(ctx, bson.M{}, options.Find().SetSort(bson.D{{Key: "name", Value: 1}}))
+	if err != nil {
+		return nil, err
+	}
+	out := []domain.Organization{}
+	return out, cur.All(ctx, &out)
+}
+
+// OpenClearances returns an organization's checklists that are still in progress.
+func (s *Store) OpenClearances(ctx context.Context, orgID bson.ObjectID) ([]domain.ExitClearance, error) {
+	cur, err := s.DB.Collection("exit_clearances").Find(ctx,
+		bson.M{"organizationId": orgID, "status": domain.ClearanceInProgress}, options.Find().SetLimit(MaxReportRows))
+	if err != nil {
+		return nil, err
+	}
+	out := []domain.ExitClearance{}
+	return out, cur.All(ctx, &out)
+}
+
+// ApprovedSeparationsEndingBy returns approved separations whose last working day is on or before the date.
+func (s *Store) ApprovedSeparationsEndingBy(ctx context.Context, orgID bson.ObjectID, by domain.Date) ([]domain.Separation, error) {
+	cur, err := s.DB.Collection("separations").Find(ctx,
+		bson.M{"organizationId": orgID, "status": domain.SeparationApproved, "lastWorkingDay": bson.M{"$lte": by.Time}},
+		options.Find().SetSort(bson.D{{Key: "lastWorkingDay", Value: 1}}).SetLimit(MaxReportRows))
+	if err != nil {
+		return nil, err
+	}
+	out := []domain.Separation{}
+	return out, cur.All(ctx, &out)
+}
+
+func (s *Store) CountSeparationsByStatus(ctx context.Context, orgID bson.ObjectID, status string) (int64, error) {
+	return s.DB.Collection("separations").CountDocuments(ctx, bson.M{"organizationId": orgID, "status": status})
+}

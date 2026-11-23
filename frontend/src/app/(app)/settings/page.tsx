@@ -23,6 +23,8 @@ function OrganizationSection({ org, onSaved }: SectionProps) {
     noticePeriodDays: String(org.settings.noticePeriodDays),
     analyticsStartDate: org.settings.analyticsStartDate ?? "",
     smallGroupThreshold: String(org.settings.smallGroupThreshold),
+    clearanceReminderDays: String(org.settings.clearanceReminderDays),
+    lastDayReminderDays: String(org.settings.lastDayReminderDays),
   });
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
     state.touch();
@@ -32,7 +34,13 @@ function OrganizationSection({ org, onSaved }: SectionProps) {
     state.save(async () => {
       await api("/organization", {
         method: "PATCH",
-        json: { ...form, noticePeriodDays: Number(form.noticePeriodDays), smallGroupThreshold: Number(form.smallGroupThreshold) },
+        json: {
+          ...form,
+          noticePeriodDays: Number(form.noticePeriodDays),
+          smallGroupThreshold: Number(form.smallGroupThreshold),
+          clearanceReminderDays: Number(form.clearanceReminderDays),
+          lastDayReminderDays: Number(form.lastDayReminderDays),
+        },
       });
       onSaved();
     });
@@ -50,6 +58,12 @@ function OrganizationSection({ org, onSaved }: SectionProps) {
         </Field>
         <Field label="Small group threshold" error={state.fields?.smallGroupThreshold} hint="Rates for groups with a lower average headcount are flagged.">
           <input type="number" min={1} max={50} value={form.smallGroupThreshold} onChange={set("smallGroupThreshold")} className={inputClass} />
+        </Field>
+        <Field label="Clearance reminders (days ahead)" error={state.fields?.clearanceReminderDays} hint="Assignees are reminded by email about items due within this many days, and about overdue ones.">
+          <input type="number" min={1} max={30} value={form.clearanceReminderDays} onChange={set("clearanceReminderDays")} className={inputClass} />
+        </Field>
+        <Field label="Last working day reminders (days ahead)" error={state.fields?.lastDayReminderDays} hint="HR and the line manager are reminded this many days before someone leaves.">
+          <input type="number" min={1} max={30} value={form.lastDayReminderDays} onChange={set("lastDayReminderDays")} className={inputClass} />
         </Field>
         <Field
           label="Analytics start date"

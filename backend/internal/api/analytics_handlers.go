@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"slices"
 	"sort"
@@ -123,30 +124,40 @@ func (s *Server) newAnalysis(r *http.Request, defaultMonths int) (*analysis, err
 	if a.depts, err = s.store.ListDepartments(r.Context(), orgID, ""); err != nil {
 		return nil, err
 	}
+	if a.ds, err = s.loadDataset(r.Context(), org); err != nil {
+		return nil, err
+	}
+	return a, nil
+}
+
+// loadDataset reads the people and exits that count toward an organization's metrics.
+func (s *Server) loadDataset(ctx context.Context, org *domain.Organization) (metrics.Dataset, error) {
+	var ds metrics.Dataset
 	counted := []string{}
 	for _, t := range org.EmploymentTypes() {
 		if t.CountsInHeadcount {
 			counted = append(counted, t.Code)
 		}
 	}
-	if a.ds.People, err = s.store.MetricPeople(r.Context(), orgID, counted); err != nil {
-		return nil, err
+	var err error
+	if ds.People, err = s.store.MetricPeople(ctx, org.ID, counted); err != nil {
+		return ds, err
 	}
-	exits, err := s.store.CompletedExits(r.Context(), orgID)
+	exits, err := s.store.CompletedExits(ctx, org.ID)
 	if err != nil {
-		return nil, err
+		return ds, err
 	}
 	// Keep only exits of counted people, so numerator and denominator cover the same population.
-	ids := make(map[bson.ObjectID]bool, len(a.ds.People))
-	for _, p := range a.ds.People {
+	ids := make(map[bson.ObjectID]bool, len(ds.People))
+	for _, p := range ds.People {
 		ids[p.ID] = true
 	}
 	for _, e := range exits {
 		if ids[e.EmployeeID] {
-			a.ds.Exits = append(a.ds.Exits, e)
+			ds.Exits = append(ds.Exits, e)
 		}
 	}
-	return a, nil
+	return ds, nil
 }
 
 // visibleDepartments lists the departments the analysis covers.

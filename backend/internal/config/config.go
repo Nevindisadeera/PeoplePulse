@@ -25,6 +25,8 @@ type Config struct {
 	// WebhookURL is the n8n webhook that receives events. Empty disables delivery.
 	WebhookURL    string
 	WebhookSecret string
+	// IntegrationKey lets the automation tool call the /integrations endpoints. Empty disables them.
+	IntegrationKey string
 }
 
 // Load reads .env (if present) and then the process environment.
@@ -44,6 +46,10 @@ func Load() (Config, error) {
 		AppBaseURL:    strings.TrimRight(get("APP_BASE_URL", "http://localhost:3000"), "/"),
 		WebhookURL:    os.Getenv("N8N_WEBHOOK_URL"),
 		WebhookSecret: os.Getenv("N8N_WEBHOOK_SECRET"),
+	}
+	c.IntegrationKey = os.Getenv("INTEGRATION_API_KEY")
+	if c.IntegrationKey != "" && len(c.IntegrationKey) < 32 {
+		return c, errors.New("INTEGRATION_API_KEY must be at least 32 characters when set")
 	}
 	if c.WebhookURL != "" && len(c.WebhookSecret) < 32 {
 		return c, errors.New("N8N_WEBHOOK_SECRET must be at least 32 characters when N8N_WEBHOOK_URL is set")
