@@ -288,3 +288,18 @@ export type FeedbackSummary = {
     questions: { questionId: string; text: string; type: "rating" | "choice" | "text"; responses: number; suppressed: boolean; average?: number; distribution?: Record<string, number> }[];
   };
 };
+
+export type DepartmentRetention = { departmentId: string; name: string; code: string; retention: Rate };
+
+export type RetentionDetail = RetentionResponse & { byDepartment: DepartmentRetention[] };
+
+export type TenureStats = { count: number; meanYears: number | null; medianYears: number | null; bands: Record<string, number> };
+
+export type TenureResponse = { asOf: string; from: string; to: string; currentStaff: TenureStats; leavers: TenureStats; bands: string[]; warnings: string[] };
+
+export type DataQuality = {
+  analyticsStartDate: string | null;
+  analyticsStartDateSet: boolean;
+  employeeRecords: number;
+  issues: { code: string; description: string; count: number; examples: string[] }[];
+};

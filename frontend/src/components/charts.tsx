@@ -83,3 +83,29 @@ export function JoinersLeaversChart({ months }: { months: Month[] }) {
     </div>
   );
 }
+
+// TurnoverTrend plots the monthly rates. A month whose rate was withheld is a
+// gap in the line, never a zero.
+export function TurnoverTrend({ months }: { months: Month[] }) {
+  const data = months.map((m) => ({
+    month: monthLabel(m.period) + (m.partial ? "*" : ""),
+    Total: m.turnover.total.value,
+    Voluntary: m.turnover.voluntary.value,
+    Involuntary: m.turnover.involuntary.value,
+  }));
+  return (
+    <div className="h-72" role="img" aria-label="Monthly turnover rate">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
+          <CartesianGrid vertical={false} stroke={LINE} strokeDasharray="2 6" />
+          <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fill: MUTED, fontSize: 11, fontWeight: 600 }} />
+          <YAxis width={44} tickLine={false} axisLine={false} tick={{ fill: MUTED, fontSize: 11 }} tickFormatter={(v) => `${v}%`} />
+          <Tooltip contentStyle={tooltipStyle} cursor={{ stroke: LINE }} formatter={(v) => (v === null || v === undefined ? "n/a" : `${Number(v).toFixed(1)}%`)} />
+          <Line type="monotone" dataKey="Total" stroke={INK} strokeWidth={2.5} dot={{ r: 3, fill: INK }} connectNulls={false} isAnimationActive={false} />
+          <Line type="monotone" dataKey="Voluntary" stroke={LIME} strokeWidth={2} dot={false} connectNulls={false} isAnimationActive={false} />
+          <Line type="monotone" dataKey="Involuntary" stroke={ORANGE} strokeWidth={2} dot={false} connectNulls={false} isAnimationActive={false} />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}

@@ -206,7 +206,7 @@ Changes go through an issue, a branch and a pull request that passes CI. See [CO
 4. Resignation and exit management (backend done)
 5. HR dashboard and analytics (backend done, including reports and the audit log)
 
-Web screens so far: sign-in, invitation, forgot and reset password, dashboard, employees, departments, separations, clearance, exit interviews, reports, audit log, users and roles, settings.
+Web screens so far: sign-in, invitation, forgot and reset password, dashboard, employees, departments, separations, clearance, exit interviews, analytics, reports, audit log, users and roles, settings.
 6. n8n workflow automation (API side done and tested; workflow files written, see [n8n/README.md](n8n/README.md))
 7. Testing, security and deployment
 
