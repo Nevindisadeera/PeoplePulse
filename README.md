@@ -21,6 +21,7 @@ Employee Turnover & Retention Management Platform. A reusable, organization-inde
 ```
 backend/                    Go REST API
 frontend/                   Next.js web application
+n8n/                        Workflow files for email notifications, with a set-up guide
 scripts/seed-demo.mjs       Fills an empty organization with demo data
 PeoplePulse-Proposal.pdf    Project proposal (requirements, architecture, roadmap)
 PeoplePulse-Proposal.html   Same proposal as a web page
@@ -110,6 +111,7 @@ All paths are under `/api/v1`.
 | GET | `/analytics/data-quality` | Record problems that would distort the metrics |
 | GET | `/reports/{type}` | Standard reports: `employees`, `separations`, `clearance`, `turnover-summary`. Add `?format=csv` to download |
 | GET | `/audit-logs` | Who did what and when, filterable by action, record, user and date |
+| GET | `/integrations/reminders/clearance`, `/integrations/reminders/last-working-day`, `/integrations/reports/monthly` | Read-only data for the n8n workflows, authenticated with `X-Integration-Key` instead of a user token |
 
 Analytics endpoints take `from`, `to` (YYYY-MM-DD, default: the last 12 calendar months) and an optional `departmentId`.
 
@@ -205,7 +207,7 @@ Changes go through an issue, a branch and a pull request that passes CI. See [CO
 5. HR dashboard and analytics (backend done, including reports and the audit log)
 
 Web screens so far: sign-in, invitation, forgot and reset password, dashboard, employees, departments, separations, clearance, exit interviews, reports, audit log, users and roles, settings.
-6. n8n workflow automation
+6. n8n workflow automation (API side done and tested; workflow files written, see [n8n/README.md](n8n/README.md))
 7. Testing, security and deployment
 
 ## Author

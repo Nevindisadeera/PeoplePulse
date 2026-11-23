@@ -38,6 +38,29 @@ type OrgSettings struct {
 	AnalyticsStartDate *Date `bson:"analyticsStartDate,omitempty" json:"analyticsStartDate"`
 	// SmallGroupThreshold is the average headcount below which a rate is flagged.
 	SmallGroupThreshold *int `bson:"smallGroupThreshold,omitempty" json:"smallGroupThreshold"`
+	// ClearanceReminderDays: remind assignees about open clearance items this many days before they are due.
+	ClearanceReminderDays *int `bson:"clearanceReminderDays,omitempty" json:"clearanceReminderDays"`
+	// LastDayReminderDays: remind HR and the line manager this many days before a last working day.
+	LastDayReminderDays *int `bson:"lastDayReminderDays,omitempty" json:"lastDayReminderDays"`
+}
+
+const (
+	DefaultClearanceReminderDays = 3
+	DefaultLastDayReminderDays   = 7
+)
+
+func (o *Organization) ClearanceReminderDays() int {
+	if o.Settings.ClearanceReminderDays == nil {
+		return DefaultClearanceReminderDays
+	}
+	return *o.Settings.ClearanceReminderDays
+}
+
+func (o *Organization) LastDayReminderDays() int {
+	if o.Settings.LastDayReminderDays == nil {
+		return DefaultLastDayReminderDays
+	}
+	return *o.Settings.LastDayReminderDays
 }
 
 const DefaultSmallGroupThreshold = 5

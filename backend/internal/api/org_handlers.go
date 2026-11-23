@@ -34,6 +34,7 @@ func viewOrg(o *domain.Organization) orgView {
 		"employmentTypes": o.EmploymentTypes(), "noticePeriodDays": o.NoticePeriodDays(),
 		"separationReasons": o.SeparationReasons(), "approvalChain": chain, "clearanceTemplate": template,
 		"analyticsStartDate": o.Settings.AnalyticsStartDate, "smallGroupThreshold": o.SmallGroupThreshold(),
+		"clearanceReminderDays": o.ClearanceReminderDays(), "lastDayReminderDays": o.LastDayReminderDays(),
 	}}
 }
 
@@ -66,6 +67,9 @@ func (s *Server) handleUpdateOrganization(w http.ResponseWriter, r *http.Request
 		// Earliest date from which employee data is complete; "" clears it.
 		AnalyticsStartDate  *string `json:"analyticsStartDate"`
 		SmallGroupThreshold *int    `json:"smallGroupThreshold" validate:"omitempty,min=1,max=50"`
+		// How many days ahead the scheduled reminders look.
+		ClearanceReminderDays *int `json:"clearanceReminderDays" validate:"omitempty,min=1,max=30"`
+		LastDayReminderDays   *int `json:"lastDayReminderDays" validate:"omitempty,min=1,max=30"`
 	}
 	if err := httpx.Decode(w, r, &in); err != nil {
 		httpx.Fail(w, r, err)
@@ -84,6 +88,12 @@ func (s *Server) handleUpdateOrganization(w http.ResponseWriter, r *http.Request
 	}
 	if in.NoticePeriodDays != nil {
 		set["settings.noticePeriodDays"] = *in.NoticePeriodDays
+	}
+	if in.ClearanceReminderDays != nil {
+		set["settings.clearanceReminderDays"] = *in.ClearanceReminderDays
+	}
+	if in.LastDayReminderDays != nil {
+		set["settings.lastDayReminderDays"] = *in.LastDayReminderDays
 	}
 	if in.SmallGroupThreshold != nil {
 		set["settings.smallGroupThreshold"] = *in.SmallGroupThreshold

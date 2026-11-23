@@ -1,0 +1,208 @@
+{
+  "name": "PeoplePulse: event emails",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "peoplepulse-events",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "id": "webhook",
+      "name": "PeoplePulse event",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "peoplepulse-events"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Recompute the signature PeoplePulse sent and refuse anything that does not\n// match or is older than five minutes. Needs NODE_FUNCTION_ALLOW_BUILTIN=crypto.\nconst crypto = require('crypto');\nconst item = $input.first();\nconst headers = item.json.headers || {};\nconst raw = await this.helpers.getBinaryDataBuffer(0, 'data');\nconst timestamp = String(headers['x-peoplepulse-timestamp'] || '');\nconst received = String(headers['x-peoplepulse-signature'] || '');\nconst expected = crypto.createHmac('sha256', $env.PEOPLEPULSE_WEBHOOK_SECRET).update(timestamp + '.').update(raw).digest('hex');\nconst fresh = Math.abs(Date.now() / 1000 - Number(timestamp)) < 300;\nconst same = received.length === expected.length && crypto.timingSafeEqual(Buffer.from(received), Buffer.from(expected));\nconst event = fresh && same ? JSON.parse(raw.toString('utf8')) : null;\nreturn [{ json: { valid: fresh && same, event } }];"
+      },
+      "id": "verify-signature",
+      "name": "Verify signature",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "valid",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-valid",
+      "name": "Signature valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        760,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "noData",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "accept",
+      "name": "Accept",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1020,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "noData",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "id": "reject",
+      "name": "Reject",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1020,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// One item per recipient. The API decided who is notified; this only fans out.\nconst event = $input.first().json.event;\nreturn (event.data.recipients || []).map((r) => ({\n  json: { email: r.email, name: r.name, title: event.data.title, body: event.data.body, link: event.data.link, eventId: event.eventId, type: event.type },\n}));"
+      },
+      "id": "one-item-per-recipient",
+      "name": "One item per recipient",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.PEOPLEPULSE_MAIL_FROM }}",
+        "toEmail": "={{ $json.email }}",
+        "subject": "={{ $json.title }}",
+        "emailFormat": "html",
+        "html": "=<div style=\"font-family:Arial,sans-serif;font-size:14px;color:#111\"><p>Hello {{ $json.name }},</p><p>{{ $json.body }}</p><p><a href=\"{{ $json.link }}\">Open in PeoplePulse</a></p></div>",
+        "options": {}
+      },
+      "id": "send-email",
+      "name": "Send email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1540,
+        300
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "REPLACE_WITH_YOUR_SMTP_CREDENTIAL",
+          "name": "SMTP account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "PeoplePulse event": {
+      "main": [
+        [
+          {
+            "node": "Verify signature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify signature": {
+      "main": [
+        [
+          {
+            "node": "Signature valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Signature valid?": {
+      "main": [
+        [
+          {
+            "node": "Accept",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reject",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Accept": {
+      "main": [
+        [
+          {
+            "node": "One item per recipient",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "One item per recipient": {
+      "main": [
+        [
+          {
+            "node": "Send email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "none"
+  },
+  "pinData": {}
+}
