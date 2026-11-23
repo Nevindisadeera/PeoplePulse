@@ -124,9 +124,11 @@ type Separation struct {
 	// Captured at completion so reports stay stable if the employee record changes later.
 	DepartmentIDAtExit *bson.ObjectID `bson:"departmentIdAtExit,omitempty" json:"departmentIdAtExit,omitempty"`
 	TenureDaysAtExit   *int           `bson:"tenureDaysAtExit,omitempty" json:"tenureDaysAtExit,omitempty"`
-	Version            int            `bson:"version" json:"version"`
-	CreatedAt          time.Time      `bson:"createdAt" json:"createdAt"`
-	UpdatedAt          time.Time      `bson:"updatedAt" json:"updatedAt"`
+	// ImportBatchID marks a past separation created by a CSV import.
+	ImportBatchID *bson.ObjectID `bson:"importBatchId,omitempty" json:"-"`
+	Version       int            `bson:"version" json:"version"`
+	CreatedAt     time.Time      `bson:"createdAt" json:"createdAt"`
+	UpdatedAt     time.Time      `bson:"updatedAt" json:"updatedAt"`
 }
 
 var (

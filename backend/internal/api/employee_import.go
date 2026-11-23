@@ -1,11 +1,13 @@
 package api
 
 import (
+	"context"
 	"encoding/csv"
 	"errors"
 	"io"
 	"net/http"
 	"net/mail"
+	"slices"
 	"strings"
 	"time"
 
@@ -22,8 +24,13 @@ const (
 	maxImportErrors = 200
 )
 
-var importColumns = []string{"employeeNumber", "fullName", "workEmail", "phone", "departmentCode", "jobTitle", "employmentType", "managerEmployeeNumber", "joinDate"}
+// Columns: the five in importRequired are mandatory. workEmail, phone,
+// jobTitle and managerEmployeeNumber are optional. For someone who has
+// already left, endDate and separationReason are given too, and
+// separationType may be.
 var importRequired = []string{"employeeNumber", "fullName", "departmentCode", "employmentType", "joinDate"}
+
+const importedNote = "Imported from CSV. The submission date was not recorded and is set to the last working day."
 
 type importError struct {
 	Row     int    `json:"row"` // 1 is the header row
@@ -35,26 +42,32 @@ type importLookups struct {
 	departments map[string]bson.ObjectID // upper-case code -> id, active only
 	types       map[string]bool          // active employment type codes
 	existing    map[string]store.EmployeeRef
+	reasons     map[string]domain.SeparationReason // every configured reason, by code
+	importer    bson.ObjectID                      // the user running the import
 	today       domain.Date
 }
 
 type importReport struct {
-	DryRun    bool          `json:"dryRun"`
-	TotalRows int           `json:"totalRows"`
-	ValidRows int           `json:"validRows"`
-	Imported  int           `json:"imported"`
-	Errors    []importError `json:"errors"`
+	DryRun    bool `json:"dryRun"`
+	TotalRows int  `json:"totalRows"`
+	ValidRows int  `json:"validRows"`
+	Imported  int  `json:"imported"`
+	// Leavers is how many of the rows are people who have already left.
+	Leavers int           `json:"leavers"`
+	Errors  []importError `json:"errors"`
 }
 
-// parseEmployeeCSV validates every row and builds the employee records. It
-// never stops at the first problem, so the user gets one complete error list.
-func parseEmployeeCSV(r io.Reader, lk importLookups, orgID, batchID bson.ObjectID, now time.Time) (emps []domain.Employee, total int, errs []importError) {
+// parseEmployeeCSV validates every row and builds the employee records, plus a
+// completed separation for each person who has already left, so that they
+// count in headcount and turnover for the time they were employed. It never
+// stops at the first problem, so the user gets one complete error list.
+func parseEmployeeCSV(r io.Reader, lk importLookups, orgID, batchID bson.ObjectID, now time.Time) (emps []domain.Employee, seps []domain.Separation, total int, errs []importError) {
 	cr := csv.NewReader(r)
 	cr.FieldsPerRecord = -1
 	cr.TrimLeadingSpace = true
 	header, err := cr.Read()
 	if err != nil {
-		return nil, 0, []importError{{Row: 1, Field: "file", Message: "the file is empty or is not valid CSV"}}
+		return nil, nil, 0, []importError{{Row: 1, Field: "file", Message: "the file is empty or is not valid CSV"}}
 	}
 	col := map[string]int{}
 	for i, h := range header {
@@ -66,7 +79,7 @@ func parseEmployeeCSV(r io.Reader, lk importLookups, orgID, batchID bson.ObjectI
 		}
 	}
 	if len(errs) > 0 {
-		return nil, 0, errs
+		return nil, nil, 0, errs
 	}
 
 	type pending struct {
@@ -155,6 +168,64 @@ func parseEmployeeCSV(r io.Reader, lk importLookups, orgID, batchID bson.ObjectI
 			e.DepartmentHistory = []domain.DepartmentAssignment{{DepartmentID: e.DepartmentID, From: join}}
 		}
 
+		// Someone who has already left: an end date with the reason they left.
+		endRaw, reasonCode, sepType := get("endDate"), strings.ToLower(get("separationReason")), strings.ToLower(get("separationType"))
+		if endRaw == "" {
+			if reasonCode != "" || sepType != "" {
+				fail(row, "endDate", "is required when a separation reason or type is given")
+			}
+		} else {
+			ok := true
+			bad := func(field, msg string) {
+				ok = false
+				fail(row, field, msg)
+			}
+			end, err := domain.ParseDate(endRaw)
+			switch {
+			case err != nil:
+				bad("endDate", err.Error())
+			case end.After(lk.today):
+				bad("endDate", "cannot be in the future; import the person as a current employee and record the separation in the application")
+			case !e.JoinDate.IsZero() && end.Before(e.JoinDate):
+				bad("endDate", "cannot be before the join date")
+			}
+			reason, known := lk.reasons[reasonCode]
+			switch {
+			case reasonCode == "":
+				bad("separationReason", "is required for someone who has left")
+			case !known:
+				bad("separationReason", "is not the code of a separation reason in this organization")
+			}
+			if known {
+				if sepType == "" {
+					// Without a type, a voluntary reason means a resignation.
+					sepType = "other"
+					if reason.Category == domain.CategoryVoluntary {
+						sepType = domain.SeparationTypeResignation
+					}
+				}
+				switch {
+				case !slices.Contains(domain.SeparationTypes, sepType):
+					bad("separationType", "must be one of: "+strings.Join(domain.SeparationTypes, ", "))
+				case (sepType == domain.SeparationTypeResignation) != (reason.Category == domain.CategoryVoluntary):
+					bad("separationType", "does not fit the reason: a resignation takes a voluntary reason, other types take an involuntary or other reason")
+				}
+			}
+			if ok && !e.JoinDate.IsZero() && e.EmployeeNumber != "" {
+				e.EndDate, e.Status = &end, domain.EmployeeSeparated
+				e.DepartmentHistory[0].To = &end
+				dept, tenure := e.DepartmentID, int(end.Sub(e.JoinDate.Time).Hours()/24)
+				seps = append(seps, domain.Separation{
+					ID: bson.NewObjectID(), OrganizationID: orgID, EmployeeID: e.ID, ImportBatchID: &batchID,
+					Type: sepType, ReasonCode: reason.Code, Category: reason.Category, SubmittedBy: lk.importer,
+					SubmissionDate: end, RequestedLastWorkingDay: end, LastWorkingDay: end, Status: domain.SeparationCompleted,
+					ApprovalSteps:      []domain.ApprovalStep{},
+					StatusHistory:      []domain.StatusChange{{Status: domain.SeparationCompleted, At: now, By: &lk.importer, Note: importedNote}},
+					DepartmentIDAtExit: &dept, TenureDaysAtExit: &tenure, Version: 1, CreatedAt: now, UpdatedAt: now,
+				})
+			}
+		}
+
 		if _, dup := inFile[e.EmployeeNumber]; !dup && e.EmployeeNumber != "" {
 			inFile[e.EmployeeNumber] = len(emps)
 		}
@@ -169,7 +240,9 @@ func parseEmployeeCSV(r io.Reader, lk importLookups, orgID, batchID bson.ObjectI
 		}
 		if m.manager == emps[i].EmployeeNumber {
 			fail(m.row, "managerEmployeeNumber", "cannot be the employee's own number")
-		} else if j, ok := inFile[m.manager]; ok {
+		} else if j, ok := inFile[m.manager]; ok && emps[j].Status == domain.EmployeeSeparated && emps[i].Status != domain.EmployeeSeparated {
+			fail(m.row, "managerEmployeeNumber", "is someone who has left, and cannot manage a current employee")
+		} else if ok {
 			emps[i].ManagerID = &emps[j].ID
 		} else if ref, ok := lk.existing[m.manager]; ok && ref.Status != domain.EmployeeSeparated {
 			id := ref.ID
@@ -178,7 +251,20 @@ func parseEmployeeCSV(r io.Reader, lk importLookups, orgID, batchID bson.ObjectI
 			fail(m.row, "managerEmployeeNumber", "does not match a current employee or another row in the file")
 		}
 	}
-	return emps, total - len(badRows), errs
+	// A separation is kept only if its row ended up valid.
+	valid := seps[:0]
+	bad := map[bson.ObjectID]bool{}
+	for i, m := range managers {
+		if badRows[m.row] {
+			bad[emps[i].ID] = true
+		}
+	}
+	for _, sep := range seps {
+		if !bad[sep.EmployeeID] {
+			valid = append(valid, sep)
+		}
+	}
+	return emps, valid, total - len(badRows), errs
 }
 
 // handleImportEmployees accepts a CSV file (multipart field "file", or the raw
@@ -206,7 +292,11 @@ func (s *Server) handleImportEmployees(w http.ResponseWriter, r *http.Request) {
 		httpx.Fail(w, r, err)
 		return
 	}
-	lk := importLookups{departments: map[string]bson.ObjectID{}, types: map[string]bool{}, existing: map[string]store.EmployeeRef{}, today: today}
+	lk := importLookups{departments: map[string]bson.ObjectID{}, types: map[string]bool{}, existing: map[string]store.EmployeeRef{}, reasons: map[string]domain.SeparationReason{}, importer: p.User.ID, today: today}
+	// Any configured reason is accepted for a past separation, including one that has since been deactivated.
+	for _, reason := range org.SeparationReasons() {
+		lk.reasons[reason.Code] = reason
+	}
 	depts, err := s.store.ListDepartments(r.Context(), orgID, domain.DepartmentActive)
 	if err != nil {
 		httpx.Fail(w, r, err)
@@ -230,8 +320,8 @@ func (s *Server) handleImportEmployees(w http.ResponseWriter, r *http.Request) {
 	}
 
 	batchID := bson.NewObjectID()
-	emps, valid, errs := parseEmployeeCSV(src, lk, orgID, batchID, time.Now().UTC())
-	report := importReport{DryRun: dryRun, TotalRows: len(emps), ValidRows: valid, Errors: errs}
+	emps, seps, valid, errs := parseEmployeeCSV(src, lk, orgID, batchID, time.Now().UTC())
+	report := importReport{DryRun: dryRun, TotalRows: len(emps), ValidRows: valid, Leavers: len(seps), Errors: errs}
 	if report.Errors == nil {
 		report.Errors = []importError{}
 	}
@@ -249,7 +339,14 @@ func (s *Server) handleImportEmployees(w http.ResponseWriter, r *http.Request) {
 		httpx.JSON(w, 200, report)
 		return
 	}
-	if err := s.store.InsertEmployees(r.Context(), emps); err != nil {
+	// Employees and the separations of those who left are saved together or not at all.
+	err = s.store.Atomic(r.Context(), func(ctx context.Context) error {
+		if err := s.store.InsertEmployees(ctx, emps); err != nil {
+			return err
+		}
+		return s.store.InsertSeparations(ctx, seps)
+	})
+	if err != nil {
 		// Without a transaction, undo the rows that were written before the failure.
 		_ = s.store.DeleteImportBatch(r.Context(), orgID, batchID)
 		if errors.Is(err, store.ErrDuplicate) {
@@ -259,6 +356,6 @@ func (s *Server) handleImportEmployees(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	report.Imported = len(emps)
-	s.audit(r, orgID, &p.User.ID, "employee.imported", "import", batchID.Hex(), map[string]any{"count": len(emps)})
+	s.audit(r, orgID, &p.User.ID, "employee.imported", "import", batchID.Hex(), map[string]any{"count": len(emps), "leavers": len(seps)})
 	httpx.JSON(w, 201, report)
 }

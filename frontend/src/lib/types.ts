@@ -141,6 +141,7 @@ export type ImportReport = {
   totalRows: number;
   validRows: number;
   imported: number;
+  leavers: number;
   errors: { row: number; field: string; message: string }[];
 };
 
