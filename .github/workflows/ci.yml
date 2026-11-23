@@ -66,6 +66,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Show what npm would change in the lock file (temporary)
+        if: failure()
+        run: |
+          npm install --package-lock-only --ignore-scripts
+          git --no-pager diff --unified=3 package-lock.json | head -200
+
       - name: Lint
         run: npm run lint
 
