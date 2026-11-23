@@ -199,7 +199,7 @@ Changes go through an issue, a branch and a pull request that passes CI. See [CO
 4. Resignation and exit management (backend done)
 5. HR dashboard and analytics (backend done, including reports and the audit log)
 
-Web screens so far: sign-in, invitation, dashboard, employees, departments, separations, clearance, reports, audit log, users and roles, settings.
+Web screens so far: sign-in, invitation, dashboard, employees, departments, separations, clearance, exit interviews, reports, audit log, users and roles, settings.
 6. n8n workflow automation
 7. Testing, security and deployment
 

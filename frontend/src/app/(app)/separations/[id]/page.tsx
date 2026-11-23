@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { ClearanceChecklist } from "@/components/clearance-checklist";
+import { ExitInterviewCard } from "@/components/exit-interview-card";
 import { ActionDialog } from "@/components/separation-dialogs";
 import { Badge, Button, Card, Notice, Skeleton } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
@@ -162,6 +163,7 @@ export default function SeparationPage() {
               ))}
             </ol>
           </Card>
+          <ExitInterviewCard separation={s} />
           <Card title="History">
             <ol className="flex flex-col">
               {s.statusHistory.map((h, i, all) => (

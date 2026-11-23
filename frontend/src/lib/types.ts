@@ -260,3 +260,29 @@ export type AuditEntry = {
   ip: string;
   at: string;
 };
+
+export type InterviewAnswer = { questionId: string; rating?: number; choice?: string; text?: string };
+
+export type ExitInterview = {
+  id: string;
+  separationId: string;
+  employeeId: string;
+  status: "draft" | "submitted";
+  questions: InterviewQuestion[];
+  answers: InterviewAnswer[];
+  notes?: string;
+  submittedAt?: string;
+  version: number;
+  employee?: EmployeeBrief;
+};
+
+export type FeedbackSummary = {
+  from: string;
+  to: string;
+  summary: {
+    interviews: number;
+    threshold: number;
+    suppressed: boolean;
+    questions: { questionId: string; text: string; type: "rating" | "choice" | "text"; responses: number; suppressed: boolean; average?: number; distribution?: Record<string, number> }[];
+  };
+};
