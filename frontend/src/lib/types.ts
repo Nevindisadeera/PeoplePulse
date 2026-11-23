@@ -225,3 +225,18 @@ export type FullOrganization = {
     smallGroupThreshold: number;
   };
 };
+
+// A user account as listed for administrators.
+export type AccountUser = {
+  id: string;
+  email: string;
+  fullName: string;
+  roleId: string;
+  employeeId?: string;
+  status: "invited" | "active" | "inactive";
+  lastLoginAt?: string;
+};
+
+export type AccountRole = { id: string; name: string; description: string; permissions: string[]; isSystemDefault: boolean; locked: boolean };
+
+export type Permission = { key: string; group: string; description: string };
