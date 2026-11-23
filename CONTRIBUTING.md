@@ -32,7 +32,7 @@ npx tsc --noEmit
 npm run build
 ```
 
-CI runs the same commands (see `.github/workflows/ci.yml`).
+CI runs the same commands (see `.github/workflows/ci.yml`), and also checks dependencies for known vulnerabilities with `govulncheck` and `npm audit`.
 
 ## Conventions
 
