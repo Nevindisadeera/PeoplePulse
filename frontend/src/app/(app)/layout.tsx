@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, ClipboardCheck, DoorOpen, FileText, History, LayoutDashboard, LogOut, Settings, ShieldCheck, Users } from "lucide-react";
+import { Building2, ClipboardCheck, DoorOpen, FileText, History, MessageSquareText, LayoutDashboard, LogOut, Settings, ShieldCheck, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -17,6 +17,7 @@ const NAV = [
   { href: "/departments", label: "Departments", icon: Building2, permissions: ["department.read"] },
   { href: "/separations", label: "Separations", icon: DoorOpen, permissions: ["separation.read", "separation.submit", "separation.manage", "separation.approve"] },
   { href: "/clearance", label: "Clearance", icon: ClipboardCheck, permissions: ["clearance.read", "clearance.manage", "clearance.update_assigned"] },
+  { href: "/exit-interviews", label: "Exit interviews", icon: MessageSquareText, permissions: ["exit_interview.read", "exit_interview.manage"] },
   { href: "/reports", label: "Reports", icon: FileText, permissions: ["report.export"] },
   { href: "/audit", label: "Audit log", icon: History, permissions: ["audit.read"] },
   { href: "/users", label: "Users", icon: ShieldCheck, permissions: ["user.read", "role.read"] },
