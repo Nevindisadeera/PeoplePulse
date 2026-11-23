@@ -21,6 +21,7 @@ Employee Turnover & Retention Management Platform. A reusable, organization-inde
 ```
 backend/                    Go REST API
 frontend/                   Next.js web application
+docs/                       Deployment guide and testing notes
 n8n/                        Workflow files for email notifications, with a set-up guide
 scripts/seed-demo.mjs       Fills an empty organization with demo data
 PeoplePulse-Proposal.pdf    Project proposal (requirements, architecture, roadmap)
@@ -194,6 +195,11 @@ npm run lint
 npm run build
 ```
 
+## Deployment and testing
+
+- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md): running the API, the web app and MongoDB outside development, with a go-live checklist.
+- [docs/TESTING.md](docs/TESTING.md): what is tested, how to run it, and what is not covered yet.
+
 ## Contributing
 
 Changes go through an issue, a branch and a pull request that passes CI. See [CONTRIBUTING.md](CONTRIBUTING.md).
@@ -208,7 +214,7 @@ Changes go through an issue, a branch and a pull request that passes CI. See [CO
 
 Web screens so far: sign-in, invitation, forgot and reset password, dashboard, employees, departments, separations, clearance, exit interviews, analytics, reports, audit log, users and roles, settings.
 6. n8n workflow automation (API side done and tested; workflow files written, see [n8n/README.md](n8n/README.md))
-7. Testing, security and deployment
+7. Testing, security and deployment (guides written: [deployment](docs/DEPLOYMENT.md), [testing](docs/TESTING.md); not yet deployed)
 
 ## Author
 
