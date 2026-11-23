@@ -1,5 +1,7 @@
 # PeoplePulse
 
+[![CI](https://github.com/Nevindisadeera/PeoplePulse/actions/workflows/ci.yml/badge.svg)](https://github.com/Nevindisadeera/PeoplePulse/actions/workflows/ci.yml)
+
 Employee Turnover & Retention Management Platform. A reusable, organization-independent web application for managing employee records, resignations, exit clearance and exit feedback, with turnover and retention analytics.
 
 **Status:** in development. The backend covers authentication, users, roles, departments and employees; the remaining modules are being built in phases.
@@ -184,6 +186,10 @@ cd ../frontend
 npm run lint
 npm run build
 ```
+
+## Contributing
+
+Changes go through an issue, a branch and a pull request that passes CI. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Roadmap
 
