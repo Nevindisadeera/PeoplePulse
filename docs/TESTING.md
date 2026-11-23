@@ -9,10 +9,11 @@ What is tested, how to run it, and what is not covered yet.
 | Unit tests | 36 Go tests for rules and calculations | Locally and in CI on every pull request |
 | Static checks | `gofmt`, `go vet`, ESLint, TypeScript | Locally and in CI |
 | Builds | Go build, Next.js production build | Locally and in CI |
+| Dependency vulnerabilities | `govulncheck` for the Go module, `npm audit` for the packages that ship to users | In CI on every pull request |
 | End-to-end API runs | Each backend feature exercised against a temporary MongoDB | Run by hand per pull request; not yet in the repository |
 | Browser runs | Each screen driven in a real browser | Run by hand per pull request; not yet in the repository |
 
-CI (`.github/workflows/ci.yml`) runs the first three on Linux for every pull request and every push to `main`. A pull request is merged only when both jobs are green.
+CI (`.github/workflows/ci.yml`) runs the first four on Linux for every pull request and every push to `main`. A pull request is merged only when every job is green.
 
 ## Running the automated checks
 
@@ -81,7 +82,7 @@ Stated plainly, so nobody assumes otherwise:
 - **The end-to-end and browser runs are not committed.** They were scripts run by hand for each pull request. Until they are in the repository and in CI, a later change could break a flow without a test failing.
 - **The n8n workflow files have not been run inside n8n.** Their scripts were executed against real API responses in Node.js, including the signature check. Importing them into n8n and sending a real email has not been done.
 - **No load or performance test.** The response-time targets in the proposal are unmeasured. Analytics load an organization's records into memory, which is sized for up to about 10,000 employee records and has not been tried at that size.
-- **No security scan or penetration test.** The controls described in the proposal are implemented and individually tested, but there has been no independent review, no dependency audit in CI, and no automated scan.
+- **No security scan or penetration test.** The controls described in the proposal are implemented and individually tested, but there has been no independent review and no scan of the running application. Known vulnerabilities in dependencies are checked in CI.
 - **No accessibility audit.** Controls have labels, focus is visible and the layout works at phone width, but nothing has been checked with a screen reader or against WCAG criteria.
 - **Backup and restore have not been rehearsed.** See the deployment guide.
 - **Only Microsoft Edge was used** for browser runs. Firefox and Safari are untested.
@@ -92,6 +93,5 @@ Stated plainly, so nobody assumes otherwise:
 1. Commit the end-to-end API runs as Go integration tests that start against a MongoDB service in CI.
 2. Commit the browser runs with Playwright and run the main flows in CI.
 3. Import the n8n workflows into a real instance and send each email once.
-4. Add `govulncheck` and `npm audit` to CI.
-5. Load a 10,000-employee organization and measure the analytics endpoints.
-6. Walk an HR practitioner through a resignation from submission to completion.
+4. Load a 10,000-employee organization and measure the analytics endpoints.
+5. Walk an HR practitioner through a resignation from submission to completion.
