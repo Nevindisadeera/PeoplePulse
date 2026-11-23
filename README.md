@@ -61,6 +61,9 @@ All paths are under `/api/v1`.
 | POST | `/auth/refresh` | Rotate the refresh token and get a new access token |
 | POST | `/auth/logout` | End the session |
 | POST | `/auth/accept-invite` | Set a password from an invitation token |
+| POST | `/auth/forgot-password` | Ask for a password reset link by email. Always answers 204, so it cannot reveal which emails have accounts |
+| POST | `/auth/reset-password` | Set a new password from a reset token and sign out every session |
+| POST | `/users/{id}/reset-link` | Create a reset link for a user, for an administrator to pass on |
 | GET | `/me` | Current user and role |
 | GET, POST | `/users` | List users, invite a user |
 | PATCH | `/users/{id}` | Change name, role or status |
@@ -147,6 +150,8 @@ Each webhook request is JSON with `eventId`, `type`, `organizationId`, `occurred
 
 The receiver should recompute the signature and reject mismatches and timestamps older than five minutes.
 
+Invitations and password resets are sent the same way, as `user.invited` and `auth.password_reset_requested`, each carrying a single-use link. These two are only stored when a webhook is configured, and their payload is erased from the database once delivered.
+
 Event types: `separation.approval_requested`, `separation.submitted`, `separation.approved`, `separation.rejected`, `separation.withdrawn`, `separation.last_working_day_changed`, `clearance.assigned`.
 
 ### CSV import format
@@ -199,7 +204,7 @@ Changes go through an issue, a branch and a pull request that passes CI. See [CO
 4. Resignation and exit management (backend done)
 5. HR dashboard and analytics (backend done, including reports and the audit log)
 
-Web screens so far: sign-in, invitation, dashboard, employees, departments, separations, clearance, exit interviews, reports, audit log, users and roles, settings.
+Web screens so far: sign-in, invitation, forgot and reset password, dashboard, employees, departments, separations, clearance, exit interviews, reports, audit log, users and roles, settings.
 6. n8n workflow automation
 7. Testing, security and deployment
 

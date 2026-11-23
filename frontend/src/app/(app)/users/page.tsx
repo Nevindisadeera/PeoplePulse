@@ -17,13 +17,40 @@ const PAGE_SIZE = 20;
 
 // ---- users ----
 
+// LinkDialog shows a single-use link once, with a copy button.
+function LinkDialog({ title, label, link, onClose, children }: { title: string; label: string; link: string; onClose: () => void; children: React.ReactNode }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <Modal title={title} onClose={onClose}>
+      <p className="text-sm text-muted">{children}</p>
+      <div className="flex items-center gap-2">
+        <input readOnly value={link} aria-label={label} onFocus={(e) => e.target.select()} className={`${inputClass} font-mono text-xs`} />
+        <Button
+          variant="secondary"
+          onClick={() =>
+            navigator.clipboard
+              .writeText(link)
+              .then(() => setCopied(true))
+              .catch(() => setCopied(false))
+          }
+        >
+          <Copy size={14} aria-hidden="true" />
+          {copied ? "Copied" : "Copy"}
+        </Button>
+      </div>
+      <div className="flex justify-end">
+        <Button onClick={onClose}>Done</Button>
+      </div>
+    </Modal>
+  );
+}
+
 function InviteDialog({ roles, onClose, onInvited }: { roles: AccountRole[]; onClose: () => void; onInvited: () => void }) {
   const submit = useSubmit();
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [roleId, setRoleId] = useState("");
   const [link, setLink] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
 
   function save(event: React.FormEvent) {
     event.preventDefault();
@@ -36,30 +63,10 @@ function InviteDialog({ roles, onClose, onInvited }: { roles: AccountRole[]; onC
 
   if (link) {
     return (
-      <Modal title="Invitation created" onClose={onClose}>
-        <p className="text-sm text-muted">
-          Send this link to {fullName}. It works once and expires in 72 hours. It is shown only now, so copy it before closing. Email delivery of invitations is added with the automation
-          workflows.
-        </p>
-        <div className="flex items-center gap-2">
-          <input readOnly value={link} aria-label="Invitation link" onFocus={(e) => e.target.select()} className={`${inputClass} font-mono text-xs`} />
-          <Button
-            variant="secondary"
-            onClick={() =>
-              navigator.clipboard
-                .writeText(link)
-                .then(() => setCopied(true))
-                .catch(() => setCopied(false))
-            }
-          >
-            <Copy size={14} aria-hidden="true" />
-            {copied ? "Copied" : "Copy"}
-          </Button>
-        </div>
-        <div className="flex justify-end">
-          <Button onClick={onClose}>Done</Button>
-        </div>
-      </Modal>
+      <LinkDialog title="Invitation created" label="Invitation link" link={link} onClose={onClose}>
+        Send this link to {fullName}. It works once and expires in 72 hours. It is shown only now, so copy it before closing. If email delivery is set up, the same link has also been
+        emailed.
+      </LinkDialog>
     );
   }
 
@@ -105,11 +112,26 @@ function EditUserDialog({ user, roles, isSelf, onClose, onSaved }: { user: Accou
   const [employee, setEmployee] = useState<{ id: string; label: string } | null | undefined>(undefined);
   const shownEmployee = employee !== undefined ? employee : linked.data ? { id: linked.data.id, label: `${linked.data.fullName} (${linked.data.employeeNumber})` } : null;
 
+  const [resetLink, setResetLink] = useState<string | null>(null);
+
   const patch = (json: Record<string, unknown>) =>
     submit.run(async () => {
       await api(`/users/${user.id}`, { method: "PATCH", json });
       onSaved();
     });
+  const createResetLink = () =>
+    submit.run(async () => {
+      const result = await api<{ resetToken: string }>(`/users/${user.id}/reset-link`, { json: {} });
+      setResetLink(`${window.location.origin}/reset-password?token=${result.resetToken}`);
+    });
+
+  if (resetLink) {
+    return (
+      <LinkDialog title="Password reset link" label="Reset link" link={resetLink} onClose={onClose}>
+        Give this link to {user.fullName}. It works once and expires in one hour. It is shown only now. Their current password keeps working until they use it.
+      </LinkDialog>
+    );
+  }
 
   return (
     <Modal title={`Edit ${user.fullName}`} onClose={onClose}>
@@ -138,10 +160,17 @@ function EditUserDialog({ user, roles, isSelf, onClose, onSaved }: { user: Accou
         </Field>
         {submit.error && <Notice tone="danger">{submit.error}</Notice>}
         <div className="flex flex-wrap justify-between gap-2">
-          {user.status === "active" && !isSelf ? (
-            <Button variant="danger" disabled={submit.busy} onClick={() => patch({ status: "inactive" })}>
-              Deactivate
-            </Button>
+          {user.status === "active" ? (
+            <div className="flex flex-wrap gap-2">
+              {!isSelf && (
+                <Button variant="danger" disabled={submit.busy} onClick={() => patch({ status: "inactive" })}>
+                  Deactivate
+                </Button>
+              )}
+              <Button variant="secondary" disabled={submit.busy} onClick={createResetLink}>
+                Create reset link
+              </Button>
+            </div>
           ) : user.status === "inactive" ? (
             <Button variant="secondary" disabled={submit.busy} onClick={() => patch({ status: "active" })}>
               Reactivate

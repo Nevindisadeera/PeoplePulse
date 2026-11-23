@@ -148,6 +148,12 @@ func (s *Store) ClaimOutboxEvent(ctx context.Context, now time.Time, lease time.
 func (s *Store) MarkOutboxDelivered(ctx context.Context, id bson.ObjectID, at time.Time) error {
 	_, err := s.DB.Collection("outbox_events").UpdateOne(ctx, bson.M{"_id": id},
 		bson.M{"$set": bson.M{"status": domain.OutboxDelivered, "deliveredAt": at}, "$unset": bson.M{"lastError": ""}})
+	if err != nil {
+		return err
+	}
+	// A delivered invitation or reset link has no reason to stay in the database.
+	_, err = s.DB.Collection("outbox_events").UpdateOne(ctx, bson.M{"_id": id, "sensitive": true},
+		bson.M{"$set": bson.M{"payload": bson.M{"erased": true}}})
 	return err
 }
 

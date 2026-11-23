@@ -27,14 +27,17 @@ type Server struct {
 	store   *store.Store
 	tokens  *auth.TokenMaker
 	limiter *auth.Limiter
+	// resetLimiter slows down repeated password reset requests.
+	resetLimiter *auth.Limiter
 }
 
 func NewServer(cfg config.Config, st *store.Store) *Server {
 	return &Server{
-		cfg:     cfg,
-		store:   st,
-		tokens:  auth.NewTokenMaker(cfg.JWTSecret, cfg.AccessTTL),
-		limiter: auth.NewLimiter(5, 15*time.Minute),
+		cfg:          cfg,
+		store:        st,
+		tokens:       auth.NewTokenMaker(cfg.JWTSecret, cfg.AccessTTL),
+		limiter:      auth.NewLimiter(5, 15*time.Minute),
+		resetLimiter: auth.NewLimiter(5, 15*time.Minute),
 	}
 }
 
@@ -60,6 +63,8 @@ func (s *Server) Routes() http.Handler {
 		r.Post("/auth/refresh", s.handleRefresh)
 		r.Post("/auth/logout", s.handleLogout)
 		r.Post("/auth/accept-invite", s.handleAcceptInvite)
+		r.Post("/auth/forgot-password", s.handleForgotPassword)
+		r.Post("/auth/reset-password", s.handleResetPassword)
 
 		r.Group(func(r chi.Router) {
 			r.Use(s.authenticate)
@@ -71,6 +76,7 @@ func (s *Server) Routes() http.Handler {
 			r.With(s.require(domain.PermUserRead)).Get("/users", s.handleListUsers)
 			r.With(s.require(domain.PermUserManage)).Post("/users", s.handleInviteUser)
 			r.With(s.require(domain.PermUserManage)).Patch("/users/{id}", s.handleUpdateUser)
+			r.With(s.require(domain.PermUserManage)).Post("/users/{id}/reset-link", s.handleCreateResetLink)
 
 			r.With(s.require(domain.PermRoleRead)).Get("/roles", s.handleListRoles)
 			r.With(s.require(domain.PermRoleRead)).Get("/permissions", s.handleListPermissions)
