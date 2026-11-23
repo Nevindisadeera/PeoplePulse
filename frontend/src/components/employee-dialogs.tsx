@@ -209,6 +209,10 @@ export function ImportDialog({ onClose, onImported }: { onClose: () => void; onI
           The first row must be a header. Required columns: <span className="text-ink">{IMPORT_COLUMNS}</span>. Optional: workEmail, phone, jobTitle,
           managerEmployeeNumber. Dates use YYYY-MM-DD. Nothing is saved unless every row is valid.
         </p>
+        <p className="text-sm text-muted">
+          <span className="text-ink">Include people who have already left.</span> Give them an <span className="text-ink">endDate</span> and a{" "}
+          <span className="text-ink">separationReason</span> (the reason&apos;s code), and optionally a separationType. Without them, headcount and turnover for past periods come out wrong.
+        </p>
         <Field label="CSV file" hint="Up to 2 MB and 5,000 rows.">
           <input
             type="file"
@@ -223,8 +227,16 @@ export function ImportDialog({ onClose, onImported }: { onClose: () => void; onI
           />
         </Field>
         {error && <Notice tone="danger">{error}</Notice>}
-        {done && <Notice>Imported {report.imported} employees.</Notice>}
-        {checked && !done && clean && <Notice>All {report.totalRows} rows are valid and ready to import.</Notice>}
+        {done && (
+          <Notice>
+            Imported {report.imported} employees{report.leavers > 0 ? `, ${report.leavers} of whom had already left` : ""}.
+          </Notice>
+        )}
+        {checked && !done && clean && (
+          <Notice>
+            All {report.totalRows} rows are valid and ready to import{report.leavers > 0 ? `: ${report.totalRows - report.leavers} current and ${report.leavers} who have left` : ""}.
+          </Notice>
+        )}
         {checked && !done && report.totalRows === 0 && report.errors.length === 0 && <Notice>The file has no data rows.</Notice>}
         {checked && report.errors.length > 0 && (
           <div className="flex flex-col gap-2">

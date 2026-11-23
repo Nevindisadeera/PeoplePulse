@@ -159,7 +159,24 @@ Event types: `separation.approval_requested`, `separation.submitted`, `separatio
 
 ### CSV import format
 
-Header row required. Columns: `employeeNumber`, `fullName`, `departmentCode`, `employmentType`, `joinDate` (YYYY-MM-DD) are required; `workEmail`, `phone`, `jobTitle`, `managerEmployeeNumber` are optional. Nothing is saved unless every row is valid.
+A header row is required. Dates use YYYY-MM-DD. Nothing is saved unless every row is valid, and `?dryRun=true` checks a file without saving.
+
+| Column | Required | Notes |
+| --- | --- | --- |
+| `employeeNumber` | yes | Unique in the organization |
+| `fullName` | yes | |
+| `departmentCode` | yes | Code of an active department |
+| `employmentType` | yes | Code of an active employment type |
+| `joinDate` | yes | |
+| `workEmail`, `phone`, `jobTitle` | no | |
+| `managerEmployeeNumber` | no | An existing employee or another row in the file |
+| `endDate` | for leavers | Last working day of someone who has already left |
+| `separationReason` | for leavers | Code of one of the organization's separation reasons |
+| `separationType` | no | Defaults to `resignation` for a voluntary reason and `other` otherwise |
+
+**Import people who have left as well as current staff.** A row with an end date creates the employee as separated together with a completed separation, so the person counts in headcount for the time they were employed and in turnover on the day they left. If leavers are missing, past headcount is too low and past turnover is wrong. Once they are in, set the analytics start date under Settings.
+
+For an imported leaver the submission date is not known, so it is recorded as the last working day.
 
 ## Running the frontend
 

@@ -160,8 +160,22 @@ func (s *Store) InsertEmployees(ctx context.Context, list []domain.Employee) err
 	return mapErr(err)
 }
 
+// InsertSeparations saves the past separations created by an import.
+func (s *Store) InsertSeparations(ctx context.Context, list []domain.Separation) error {
+	if len(list) == 0 {
+		return nil
+	}
+	_, err := s.DB.Collection("separations").InsertMany(ctx, list)
+	return mapErr(err)
+}
+
+// DeleteImportBatch removes everything one import wrote: employees and their past separations.
 func (s *Store) DeleteImportBatch(ctx context.Context, orgID, batchID bson.ObjectID) error {
-	_, err := s.DB.Collection("employees").DeleteMany(ctx, bson.M{"organizationId": orgID, "importBatchId": batchID})
+	filter := bson.M{"organizationId": orgID, "importBatchId": batchID}
+	if _, err := s.DB.Collection("separations").DeleteMany(ctx, filter); err != nil {
+		return err
+	}
+	_, err := s.DB.Collection("employees").DeleteMany(ctx, filter)
 	return err
 }
 

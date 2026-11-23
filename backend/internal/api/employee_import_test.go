@@ -19,12 +19,87 @@ func testLookups() importLookups {
 			"E001": {ID: bson.NewObjectID(), EmployeeNumber: "E001", Status: domain.EmployeeActive},
 			"E002": {ID: bson.NewObjectID(), EmployeeNumber: "E002", Status: domain.EmployeeSeparated},
 		},
+		reasons: map[string]domain.SeparationReason{
+			"personal":   {Code: "personal", Category: domain.CategoryVoluntary, Active: true},
+			"misconduct": {Code: "misconduct", Category: domain.CategoryInvoluntary, Active: true},
+			"retirement": {Code: "retirement", Category: domain.CategoryOther, Active: false},
+		},
 		today: domain.NewDate(2026, 11, 15),
 	}
 }
 
 func parse(csv string) ([]domain.Employee, int, []importError) {
-	return parseEmployeeCSV(strings.NewReader(csv), testLookups(), bson.NewObjectID(), bson.NewObjectID(), time.Now())
+	emps, _, valid, errs := parseEmployeeCSV(strings.NewReader(csv), testLookups(), bson.NewObjectID(), bson.NewObjectID(), time.Now())
+	return emps, valid, errs
+}
+
+func parseAll(csv string) ([]domain.Employee, []domain.Separation, []importError) {
+	emps, seps, _, errs := parseEmployeeCSV(strings.NewReader(csv), testLookups(), bson.NewObjectID(), bson.NewObjectID(), time.Now())
+	return emps, seps, errs
+}
+
+const leaverHeader = "employeeNumber,fullName,departmentCode,employmentType,joinDate,endDate,separationReason,separationType,managerEmployeeNumber\n"
+
+func TestImportFormerEmployees(t *testing.T) {
+	emps, seps, errs := parseAll(leaverHeader +
+		"L1,Left Voluntarily,ENG,permanent,2024-01-10,2025-01-09,personal,,\n" + // type defaults to resignation
+		"L2,Was Dismissed,ENG,permanent,2023-03-01,2023-08-31,misconduct,termination,L1\n" + // managed by another leaver: allowed
+		"L3,Retired Person,HR,permanent,2020-01-01,2026-01-01,retirement,,\n" + // deactivated reason; type defaults to other
+		"C1,Still Here,ENG,permanent,2025-02-01,,,,\n")
+	if len(errs) != 0 {
+		t.Fatalf("unexpected errors: %+v", errs)
+	}
+	if len(emps) != 4 || len(seps) != 3 {
+		t.Fatalf("got %d employees and %d separations, want 4 and 3", len(emps), len(seps))
+	}
+	left := emps[0]
+	if left.Status != domain.EmployeeSeparated || left.EndDate.String() != "2025-01-09" || left.DepartmentHistory[0].To.String() != "2025-01-09" {
+		t.Errorf("leaver record: status %s, end %v, history %+v", left.Status, left.EndDate, left.DepartmentHistory)
+	}
+	if emps[3].Status != domain.EmployeeActive || emps[3].EndDate != nil {
+		t.Errorf("current employee was changed: %+v", emps[3])
+	}
+	// 2024-01-10 to 2025-01-09 spans the 2024 leap day: 365 days.
+	s := seps[0]
+	if s.EmployeeID != left.ID || s.Status != domain.SeparationCompleted || s.Type != domain.SeparationTypeResignation ||
+		s.Category != domain.CategoryVoluntary || s.LastWorkingDay.String() != "2025-01-09" || *s.TenureDaysAtExit != 365 || *s.DepartmentIDAtExit != left.DepartmentID {
+		t.Errorf("separation of the voluntary leaver: %+v", s)
+	}
+	if seps[1].Type != "termination" || seps[1].Category != domain.CategoryInvoluntary || seps[2].Type != "other" || seps[2].Category != domain.CategoryOther {
+		t.Errorf("types and categories: %s/%s and %s/%s", seps[1].Type, seps[1].Category, seps[2].Type, seps[2].Category)
+	}
+	if s.ImportBatchID == nil || len(s.StatusHistory) != 1 {
+		t.Errorf("an imported separation carries its batch and one history entry: %+v", s)
+	}
+}
+
+func TestImportFormerEmployeeProblems(t *testing.T) {
+	_, seps, errs := parseAll(leaverHeader +
+		"P1,End Before Join,ENG,permanent,2025-01-10,2024-12-31,personal,,\n" + // row 2
+		"P2,No Reason Given,ENG,permanent,2024-01-10,2025-01-09,,,\n" + // row 3
+		"P3,Unknown Reason,ENG,permanent,2024-01-10,2025-01-09,boredom,,\n" + // row 4
+		"P4,Wrong Type,ENG,permanent,2024-01-10,2025-01-09,misconduct,resignation,\n" + // row 5
+		"P5,Future End,ENG,permanent,2024-01-10,2027-01-09,personal,,\n" + // row 6
+		"P6,Reason No End,ENG,permanent,2024-01-10,,personal,,\n" + // row 7
+		"P7,Current Staff,ENG,permanent,2024-01-10,,,,P8\n" + // row 8: managed by a leaver
+		"P8,Fine Leaver,ENG,permanent,2024-01-10,2025-01-09,personal,,\n") // row 9: valid
+	want := map[int]string{2: "endDate", 3: "separationReason", 4: "separationReason", 5: "separationType", 6: "endDate", 7: "endDate", 8: "managerEmployeeNumber"}
+	got := map[int]string{}
+	for _, e := range errs {
+		got[e.Row] = e.Field
+	}
+	for row, field := range want {
+		if got[row] != field {
+			t.Errorf("row %d: error on %q, want %q (all: %+v)", row, got[row], field, errs)
+		}
+	}
+	if len(got) != len(want) {
+		t.Errorf("errors on rows %v, want only rows 2 to 8", got)
+	}
+	// Only the valid leaver produces a separation; rows with errors must not.
+	if len(seps) != 1 {
+		t.Errorf("got %d separations, want 1", len(seps))
+	}
 }
 
 func TestImportValidFile(t *testing.T) {
