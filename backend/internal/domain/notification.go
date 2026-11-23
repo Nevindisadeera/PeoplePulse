@@ -36,6 +36,8 @@ const (
 	EventSeparationWithdrawn   = "separation.withdrawn"
 	EventLastWorkingDayChanged = "separation.last_working_day_changed"
 	EventClearanceAssigned     = "clearance.assigned"
+	EventUserInvited           = "user.invited"
+	EventPasswordResetRequest  = "auth.password_reset_requested"
 )
 
 // OutboxEvent is a business event waiting to be delivered to the automation
@@ -47,10 +49,12 @@ type OutboxEvent struct {
 	OrganizationID bson.ObjectID `bson:"organizationId"`
 	Type           string        `bson:"type"`
 	Payload        bson.M        `bson:"payload"`
-	Status         string        `bson:"status"`
-	Attempts       int           `bson:"attempts"`
-	NextAttemptAt  time.Time     `bson:"nextAttemptAt"`
-	LastError      string        `bson:"lastError,omitempty"`
-	DeliveredAt    *time.Time    `bson:"deliveredAt,omitempty"`
-	CreatedAt      time.Time     `bson:"createdAt"`
+	// Sensitive events carry a single-use link. Their payload is erased once delivered.
+	Sensitive     bool       `bson:"sensitive,omitempty"`
+	Status        string     `bson:"status"`
+	Attempts      int        `bson:"attempts"`
+	NextAttemptAt time.Time  `bson:"nextAttemptAt"`
+	LastError     string     `bson:"lastError,omitempty"`
+	DeliveredAt   *time.Time `bson:"deliveredAt,omitempty"`
+	CreatedAt     time.Time  `bson:"createdAt"`
 }

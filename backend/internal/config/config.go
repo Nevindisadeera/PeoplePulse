@@ -17,6 +17,7 @@ type Config struct {
 	AccessTTL    time.Duration
 	RefreshTTL   time.Duration
 	InviteTTL    time.Duration
+	ResetTTL     time.Duration
 	CookieSecure bool
 	CORSOrigin   string
 	// AppBaseURL is the web application's address, used to build links in emails.
@@ -37,6 +38,7 @@ func Load() (Config, error) {
 		AccessTTL:     dur("ACCESS_TOKEN_TTL", 15*time.Minute),
 		RefreshTTL:    dur("REFRESH_TOKEN_TTL", 7*24*time.Hour),
 		InviteTTL:     dur("INVITE_TTL", 72*time.Hour),
+		ResetTTL:      dur("PASSWORD_RESET_TTL", time.Hour),
 		CookieSecure:  get("COOKIE_SECURE", "true") != "false",
 		CORSOrigin:    get("CORS_ORIGIN", "http://localhost:3000"),
 		AppBaseURL:    strings.TrimRight(get("APP_BASE_URL", "http://localhost:3000"), "/"),

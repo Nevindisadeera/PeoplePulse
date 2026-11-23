@@ -69,6 +69,7 @@ func (s *Store) EnsureIndexes(ctx context.Context) error {
 			{Keys: bson.D{{Key: "email", Value: 1}}, Options: unique()},
 			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "roleId", Value: 1}, {Key: "status", Value: 1}}},
 			{Keys: bson.D{{Key: "inviteTokenHash", Value: 1}}, Options: options.Index().SetSparse(true)},
+			{Keys: bson.D{{Key: "resetTokenHash", Value: 1}}, Options: options.Index().SetSparse(true)},
 		},
 		"roles": {
 			{Keys: bson.D{{Key: "organizationId", Value: 1}, {Key: "name", Value: 1}}, Options: unique()},

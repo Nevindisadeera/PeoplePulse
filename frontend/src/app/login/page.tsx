@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Logo, Notice } from "@/components/ui";
@@ -61,6 +62,9 @@ export default function LoginPage() {
             {busy ? "Signing in…" : "Sign in"}
           </button>
         </form>
+        <Link href="/forgot-password" className="text-center text-xs font-semibold text-lime hover:underline">
+          Forgot your password?
+        </Link>
         <p className="text-xs text-muted">Accounts are created by invitation. Ask your administrator if you do not have one.</p>
       </div>
     </main>

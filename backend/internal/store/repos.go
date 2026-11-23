@@ -79,6 +79,12 @@ func (s *Store) UserByInviteHash(ctx context.Context, hash string) (*domain.User
 	return &u, mapErr(err)
 }
 
+func (s *Store) UserByResetHash(ctx context.Context, hash string) (*domain.User, error) {
+	var u domain.User
+	err := s.DB.Collection("users").FindOne(ctx, bson.M{"resetTokenHash": hash}).Decode(&u)
+	return &u, mapErr(err)
+}
+
 func (s *Store) UserByID(ctx context.Context, orgID, id bson.ObjectID) (*domain.User, error) {
 	var u domain.User
 	err := s.DB.Collection("users").FindOne(ctx, bson.M{"_id": id, "organizationId": orgID}).Decode(&u)

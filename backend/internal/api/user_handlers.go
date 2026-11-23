@@ -68,6 +68,8 @@ func (s *Server) handleInviteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.audit(r, orgID, &p.User.ID, "user.invited", "user", user.ID.Hex(), map[string]any{"email": user.Email, "roleId": roleID.Hex()})
+	s.sendLink(r, user, domain.EventUserInvited, "You have been invited to PeoplePulse",
+		"An account has been created for you. Choose a password to activate it. The link works once and expires in 72 hours.", "/accept-invite?token="+token)
 	httpx.JSON(w, 201, map[string]any{"user": user, "inviteToken": token, "inviteExpiresAt": expires})
 }
 

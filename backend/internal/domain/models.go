@@ -46,6 +46,8 @@ type User struct {
 	Status          string         `bson:"status" json:"status"`
 	InviteTokenHash string         `bson:"inviteTokenHash,omitempty" json:"-"`
 	InviteExpiresAt *time.Time     `bson:"inviteExpiresAt,omitempty" json:"-"`
+	ResetTokenHash  string         `bson:"resetTokenHash,omitempty" json:"-"`
+	ResetExpiresAt  *time.Time     `bson:"resetExpiresAt,omitempty" json:"-"`
 	LastLoginAt     *time.Time     `bson:"lastLoginAt,omitempty" json:"lastLoginAt,omitempty"`
 	CreatedAt       time.Time      `bson:"createdAt" json:"createdAt"`
 	UpdatedAt       time.Time      `bson:"updatedAt" json:"updatedAt"`
