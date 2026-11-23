@@ -70,7 +70,14 @@ jobs:
         if: failure()
         run: |
           npm install --package-lock-only --ignore-scripts
-          git --no-pager diff --unified=3 package-lock.json | head -200
+          git --no-pager diff --stat package-lock.json
+
+      - name: Upload the lock file npm produced (temporary)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-lock
+          path: frontend/package-lock.json
 
       - name: Lint
         run: npm run lint
