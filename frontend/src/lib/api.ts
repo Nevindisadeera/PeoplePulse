@@ -117,3 +117,17 @@ export async function api<T>(path: string, options: Options = {}): Promise<T> {
   if (!res.ok) throw toError(res, body);
   return body as T;
 }
+
+// download fetches a file from an authenticated endpoint. A plain link cannot
+// be used because the access token travels in a header, not a cookie.
+export async function download(path: string): Promise<{ blob: Blob; filename: string }> {
+  const send = () => fetch(BASE + path, { credentials: "include", headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {} });
+  let res = await send();
+  if (res.status === 401) {
+    if (await refreshSession()) res = await send();
+    else onSessionLost?.();
+  }
+  if (!res.ok) throw toError(res, await parse(res));
+  const name = /filename="([^"]+)"/.exec(res.headers.get("Content-Disposition") ?? "")?.[1] ?? "download";
+  return { blob: await res.blob(), filename: name };
+}

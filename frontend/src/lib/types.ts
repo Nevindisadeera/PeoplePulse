@@ -240,3 +240,23 @@ export type AccountUser = {
 export type AccountRole = { id: string; name: string; description: string; permissions: string[]; isSystemDefault: boolean; locked: boolean };
 
 export type Permission = { key: string; group: string; description: string };
+
+export type Report = {
+  type: string;
+  from: string;
+  to: string;
+  generatedAt: string;
+  report: { title: string; columns: string[]; rows: string[][]; notes: string[] };
+};
+
+export type AuditEntry = {
+  id: string;
+  actorName?: string;
+  actorType: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  changes?: Record<string, unknown>;
+  ip: string;
+  at: string;
+};
